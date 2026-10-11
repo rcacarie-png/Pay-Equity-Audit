@@ -1,1 +1,1 @@
-# Adult Income Prediction - Supervised Learning project
+# Adult Income Prediction Project
