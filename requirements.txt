@@ -1,0 +1,14 @@
+scikit-learn==1.9.1
+pandas==3.0.6
+numpy==2.5.4
+matplotlib==3.11.2
+mlflow==3.17.1
+lightgbm==4.7.0
+imbalanced-learn==0.14.2
+optuna==5.0.0
+shap==0.53.0
+fairlearn==0.15.0
+cloudpickle==3.1.2
+fastapi==0.143.0
+uvicorn==0.54.0
+pydantic==2.14.1
