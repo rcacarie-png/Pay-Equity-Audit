@@ -1,4 +1,4 @@
-"""Part 4 — SHAP, calibration, decision threshold, final test, fairness and pay-equity audit.
+"""Part 4: SHAP, calibration, decision threshold, final test, fairness and pay-equity audit.
 
 Run from the repository root:  python -m src.part4_explain_calibrate_audit
 """
@@ -112,7 +112,7 @@ val_proba_raw = final_pipe.predict_proba(X_val)[:, 1]
 
 fig, ax = plt.subplots(figsize=(6, 6))
 CalibrationDisplay.from_predictions(y_val, val_proba_raw, n_bins=10, name=f"{FINAL_MODEL_NAME} (raw)", ax=ax)
-ax.set_title("Reliability curve — validation set")
+ax.set_title("Reliability curve: validation set")
 plt.show()
 
 display(calibration_summary("raw", y_val, val_proba_raw).round(4))
@@ -137,7 +137,7 @@ for method, calibrated in calibrated_models.items():
     CalibrationDisplay.from_predictions(
         y_val, calibrated.predict_proba(X_val)[:, 1], n_bins=10, name=method, ax=ax,
     )
-ax.set_title("Reliability curves — before and after calibration (validation)")
+ax.set_title("Reliability curves: before and after calibration (validation)")
 plt.show()
 
 CALIBRATION_METHOD = calibration_table["brier_score"].idxmin()
@@ -157,7 +157,7 @@ bin_table = (
 
 fig, ax = plt.subplots(figsize=(8, 3.5))
 ax.bar(range(len(bin_table)), bin_table["n_people"], color=NAVY)
-ax.set_xticks(range(len(bin_table)), [f"{b.left:.1f}–{b.right:.1f}" for b in bin_table.index], rotation=45)
+ax.set_xticks(range(len(bin_table)), [f"{b.left:.1f}-{b.right:.1f}" for b in bin_table.index], rotation=45)
 ax.set_xlabel("Calibrated probability (validation)")
 ax.set_ylabel("Number of people")
 ax.set_title("People per probability bin")
@@ -222,7 +222,7 @@ RocCurveDisplay.from_predictions(y_test, test_proba, name=FINAL_MODEL_NAME, ax=a
 axes[1].set_title("ROC curve (test)")
 
 PrecisionRecallDisplay.from_predictions(y_test, test_proba, name=FINAL_MODEL_NAME, ax=axes[2])
-axes[2].set_title("Precision–recall curve (test)")
+axes[2].set_title("Precision-recall curve (test)")
 
 plt.tight_layout()
 plt.show()
@@ -307,7 +307,7 @@ fig, axes = plt.subplots(1, 2, figsize=(15, 5), gridspec_kw={"width_ratios": [1,
 
 for ax, (title, table) in zip(axes, [("Sex", audit_sex), ("Race", audit_race)]):
     table[["actual_rate", "expected_rate"]].plot(kind="bar", ax=ax)
-    ax.set_title(f"Actual vs expected share earning >50K — {title} (test set)")
+    ax.set_title(f"Actual vs expected share earning >50K: {title} (test set)")
     ax.set_ylabel("Share earning >50K")
     ax.set_xlabel("")
     ax.tick_params(axis="x", rotation=0)
@@ -424,7 +424,7 @@ display(sensitivity.loc[["Female", "Male", "Black", "White", "Asian-Pac-Islander
 
 # --- Log the final evaluation and the audit in MLflow ---
 
-with mlflow.start_run(run_name=f"{FINAL_MODEL_NAME} — final test & audit"):
+with mlflow.start_run(run_name=f"{FINAL_MODEL_NAME}: final test & audit"):
     mlflow.set_tags({"stage": "final_test", "model_type": FINAL_MODEL_NAME, "source_run_id": final_run_id})
     mlflow.log_params({
         "calibration_method": CALIBRATION_METHOD,

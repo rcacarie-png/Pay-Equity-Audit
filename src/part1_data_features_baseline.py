@@ -1,4 +1,4 @@
-"""Part 1 — Data exploration, column choice, feature engineering, pipeline and baseline.
+"""Part 1: Data exploration, column choice, feature engineering, pipeline and baseline.
 
 Run from the repository root:  python -m src.part1_data_features_baseline
 """
@@ -404,11 +404,11 @@ print(f"False negatives: {fn}")
 print(f"True positives : {tp}")
 
 ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["<=50K", ">50K"]).plot(cmap=BLUES, colorbar=False)
-plt.title("Logistic Regression — Confusion matrix (validation)")
+plt.title("Logistic Regression: Confusion matrix (validation)")
 plt.show()
 
 RocCurveDisplay.from_predictions(y_val, y_val_proba)
-plt.title("Logistic Regression — ROC curve (validation)")
+plt.title("Logistic Regression: ROC curve (validation)")
 plt.show()
 
 # --- Takeaways of Part 1 ---

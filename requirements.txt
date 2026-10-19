@@ -1,4 +1,4 @@
-# Python 3.10+ — tested with the versions in brackets
+# Python 3.10+: tested with the versions in brackets
 scikit-learn>=1.5        # (1.9.1)
 pandas>=2.2              # (3.0.5)
 numpy>=1.26              # (2.5.3)

@@ -1,4 +1,4 @@
-"""Part 3 — Hyperparameter tuning with Optuna and 5-fold stratified cross-validation.
+"""Part 3: Hyperparameter tuning with Optuna and 5-fold stratified cross-validation.
 
 Run from the repository root:  python -m src.part3_tuning
 """
@@ -107,7 +107,7 @@ def make_objective(model_name):
         mean, std, scores = cv_pr_auc(pipe)
         duration = time.perf_counter() - start
 
-        with mlflow.start_run(run_name=f"{model_name} — trial {trial.number}", nested=True):
+        with mlflow.start_run(run_name=f"{model_name}: trial {trial.number}", nested=True):
             mlflow.set_tags({"stage": "tuning_trial", "model_type": model_name})
             mlflow.log_params(trial.params)
             mlflow.log_metrics({
@@ -132,7 +132,7 @@ for model_name in MODEL_BUILDERS:
         study_name=model_name,
     )
 
-    with mlflow.start_run(run_name=f"tuning — {model_name}"):
+    with mlflow.start_run(run_name=f"tuning: {model_name}"):
         mlflow.set_tags({"stage": "tuning", "model_type": model_name})
         study.optimize(make_objective(model_name), n_trials=N_TRIALS[model_name])
 
@@ -141,7 +141,7 @@ for model_name in MODEL_BUILDERS:
 
         with plt.rc_context():   # keeps Optuna's "ggplot" style inside this plot only
             ax = optuna.visualization.matplotlib.plot_optimization_history(study)
-            ax.set_title(f"Optimization history — {model_name}", loc="left")
+            ax.set_title(f"Optimization history: {model_name}", loc="left")
             mlflow.log_figure(ax.figure, "optimization_history.png")
             plt.close(ax.figure)
 
@@ -174,7 +174,7 @@ plt.show()
 with plt.rc_context():
     for name in ["Random Forest", "LightGBM"]:
         ax = optuna.visualization.matplotlib.plot_param_importances(studies[name])
-        ax.set_title(f"Hyperparameter importance — {name}", loc="left")  # replaces Optuna's own title
+        ax.set_title(f"Hyperparameter importance: {name}", loc="left")  # replaces Optuna's own title
         ax.set_facecolor("white")                 # Optuna draws in its own grey style: apply ours
         ax.grid(False)
         for bar in ax.patches:
