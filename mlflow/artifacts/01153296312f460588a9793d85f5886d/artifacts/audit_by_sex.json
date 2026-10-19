@@ -1,0 +1,1 @@
+{"columns":["group","n","actual_rate","expected_rate","unexplained_gap_pts","ci_low_pts","ci_high_pts","underpaid_rate","enough_data"],"data":[["Female",3259,0.1107701749,0.1648183532,-5.4048178288,-6.2663493474,-4.5618475868,0.3359683794,true],["Male",6510,0.3036866359,0.2705994626,3.3087173356,2.4332749144,4.1596353644,0.1485568761,true]]}

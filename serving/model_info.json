@@ -1,0 +1,15 @@
+{
+  "model_type": "LightGBM",
+  "calibration_method": "isotonic",
+  "threshold": 0.5,
+  "excluded_columns": [
+    "sex",
+    "race",
+    "native-country",
+    "relationship",
+    "marital-status",
+    "fnlwgt",
+    "education"
+  ],
+  "test_roc_auc": 0.8932593605107682
+}
