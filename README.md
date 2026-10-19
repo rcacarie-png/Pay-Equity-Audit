@@ -1,9 +1,9 @@
 # Pay-Equity Audit with Supervised Learning
 
-**Course:** Supervised Learning & Model Engineering
-**Teacher:** Ilana Sebag
-**Team:** Thomas Pasquier--Guillard, Robin Cacarié et  Lélia Hervy
-**Dataset:** Adult / Census Income ([OpenML `adult`, version 2](https://www.openml.org/d/1590)), 48,842 people
+**Course:** Supervised Learning & Model Engineering\
+**Teacher:** Ilana Sebag\
+**Team:** Thomas Pasquier--Guillard, Robin Cacarié et  Lélia Hervy\
+**Dataset:** Adult / Census Income ([OpenML `adult`, version 2](https://www.openml.org/d/1590)), 48,842 people\
 **Author of Dataset:** Ronny Kohavi and Barry Becker, "Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid", Proceedings of the Second International Conference on Knowledge Discovery and Data Mining, 1996
 
 ## Our choosen problem
