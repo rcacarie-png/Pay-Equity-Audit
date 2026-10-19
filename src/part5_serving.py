@@ -108,6 +108,16 @@ repo_root = os.path.abspath(".") + os.sep
 connection = sqlite3.connect(os.path.join(MLFLOW_DIR, "mlflow.db"))
 connection.execute("UPDATE experiments SET artifact_location = REPLACE(artifact_location, ?, '')", (repo_root,))
 connection.execute("UPDATE runs SET artifact_uri = REPLACE(artifact_uri, ?, '')", (repo_root,))
+connection.execute("UPDATE logged_models SET artifact_location = REPLACE(artifact_location, ?, '')", (repo_root,))
 connection.commit()
 connection.close()
+
+# the saved models also write the full path in their description file (MLmodel), we clean it the same way
+for folder, subfolders, files in os.walk(os.path.join(MLFLOW_DIR, "artifacts")):
+    if "MLmodel" in files:
+        path = os.path.join(folder, "MLmodel")
+        with open(path) as f:
+            text = f.read()
+        with open(path, "w") as f:
+            f.write(text.replace(repo_root, ""))
 print("MLflow paths made relative, the folder mlflow/ can be committed")
