@@ -1,4 +1,4 @@
-"""Part 2 — MLflow tracking, class-imbalance remedies and comparison of three models.
+"""Part 2: MLflow tracking, class-imbalance remedies and comparison of three models.
 
 Run from the repository root:  python -m src.part2_imbalance_and_models
 """
@@ -15,22 +15,11 @@ try:
 except ImportError:
     IN_COLAB = False
 
-DRIVE_BACKUP_DIR = None  # stays None if Drive is not available
+DRIVE_BACKUP_DIR = None  # no Drive copy anymore: the runs are saved in the repository
 
-if IN_COLAB:
-    MLFLOW_DIR = "/content/mlflow"
-    try:
-        from google.colab import drive
-        drive.mount("/content/drive")
-        DRIVE_BACKUP_DIR = "/content/drive/MyDrive/Supervised Learning & Model Engineering/Final Project/Code adapted to problematic/mlflow"
-        if os.path.exists(DRIVE_BACKUP_DIR):            # restore previous runs
-            shutil.copytree(DRIVE_BACKUP_DIR, MLFLOW_DIR, dirs_exist_ok=True)
-    except Exception as error:
-        # If Drive cannot be mounted, MLflow still works locally for this session
-        print("Could not mount Google Drive:", error)
-        print("MLflow will work, but download the runs at the end (Part V).")
-else:
-    MLFLOW_DIR = os.path.abspath("mlflow")
+# All the runs go in the folder mlflow/ at the root of the repository (the scripts are run from there),
+# so the MLflow history is committed with the code and anyone who clones the repo can open it.
+MLFLOW_DIR = os.path.abspath("mlflow")
 
 os.makedirs(MLFLOW_DIR, exist_ok=True)
 
@@ -158,7 +147,7 @@ display(remedy_comparison[["precision", "recall", "f1", "roc_auc", "pr_auc", "ac
 remedy_comparison[["precision", "recall", "f1", "pr_auc"]].plot(kind="bar", figsize=(10, 5))
 plt.ylabel("Score (validation)")
 plt.ylim(0, 1)
-plt.title("Logistic Regression — effect of each imbalance remedy")
+plt.title("Logistic Regression: effect of each imbalance remedy")
 plt.xticks(rotation=0)
 plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)  # below the chart
 plt.show()
@@ -220,14 +209,14 @@ plt.xticks(rotation=0)
 plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)  # below the chart
 plt.show()
 
-# --- Precision–recall curves ---
+# --- Precision-recall curves ---
 
 fig, ax = plt.subplots(figsize=(7, 6))
 for name, pipe in fitted_pipes.items():
     PrecisionRecallDisplay.from_estimator(pipe, X_val, y_val, name=name, ax=ax)
 
 ax.axhline(y_val.mean(), linestyle="--", color=STEEL, label=f"Random model ({y_val.mean():.2f})")
-ax.set_title("Precision–recall curves (validation)")
+ax.set_title("Precision-recall curves (validation)")
 ax.legend(loc="lower left")
 plt.show()
 

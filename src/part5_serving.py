@@ -1,4 +1,4 @@
-"""Part 5 — Export of the calibrated model and tests of the audit API (serving/audit_api.py).
+"""Part 5: Export of the calibrated model and tests of the audit API (serving/audit_api.py).
 
 Run from the repository root:  python -m src.part5_serving
 """
@@ -94,3 +94,20 @@ try:
     files.download(archive)
 except ImportError:
     print("Not in Colab: the API files are in", os.path.abspath(SERVING_DIR))
+
+# ==============================================================================
+# Make the MLflow history portable (last step)
+# ==============================================================================
+
+# MLflow saves the full path of the artifacts folder of this computer (for example /Users/rob/...).
+# We replace it by the relative path "mlflow/artifacts", so the mlflow/ folder committed in the repository
+# opens on any computer with: mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db  (run from the repository root)
+import sqlite3
+
+repo_root = os.path.abspath(".") + os.sep
+connection = sqlite3.connect(os.path.join(MLFLOW_DIR, "mlflow.db"))
+connection.execute("UPDATE experiments SET artifact_location = REPLACE(artifact_location, ?, '')", (repo_root,))
+connection.execute("UPDATE runs SET artifact_uri = REPLACE(artifact_uri, ?, '')", (repo_root,))
+connection.commit()
+connection.close()
+print("MLflow paths made relative, the folder mlflow/ can be committed")
