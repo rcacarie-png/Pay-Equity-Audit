@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 HERE = Path(__file__).parent
-MIN_GROUP_SIZE = 30          # smaller groups are reported but marked as too small
+MIN_GROUP_SIZE = 100         # smaller groups are reported but marked as too small (same rule as part 4)
 
 with open(HERE / "audit_model.pkl", "rb") as f:
     MODEL = cloudpickle.load(f)
