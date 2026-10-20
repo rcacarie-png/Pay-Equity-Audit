@@ -122,7 +122,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 
 1. **Split:** 60% train, 20% validation, 20% test, stratified, with `random_state=42`. The test set is used once, at the end.
 2. **Features:**
-   - protected attributes, their proxies, `fnlwgt` and `education` (a duplicate of `education-num`) are dropped inside the pipeline;
+   - protected attributes, their proxies, `fnlwgt` and `education` (a duplicate (in another format) of `education-num`) are dropped inside the pipeline;
    - five features are added: `capital_net`, `has_capital`, `log_capital_gain`, `works_overtime`, `is_part_time`.
 3. **Class imbalance (24% positives):** we use `class_weight="balanced"`, after comparing it with undersampling and SMOTE.
 4. **Models:** Logistic Regression, Random Forest and LightGBM, all in one scikit-learn `Pipeline`.
@@ -143,6 +143,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 - **Some discrimination is invisible to the audit.** Unequal access to well-paid jobs is "explained" by occupation and hidden, so the measured gaps are a lower bound.
 - **The data describes individuals, not companies,** and dates from 1994. The target is total income above \$50K, not salary. The method matters more than the size of the gaps.
 - **Small race groups** (Amer-Indian-Eskimo, Other) have too few people for conclusions.
+  We must take those limitations into account to avoid be biased in our conclusions as much as possible.
 
 ## Reproducibility
 
@@ -153,8 +154,8 @@ Sex and race are only used to **group** the audit results. The model drops them 
 
 | Member | Main contributions |
 |---|---|
-| **Lélia Hervy** | Wrote most of the code: exploration, feature engineering, pipeline, class-imbalance comparison, model comparison, tuning, calibration, SHAP, fairness and pay-equity audit, API. Merged the analysis into the final notebook, applied the graphic identity to the figures, and maintains the repository. |
-| **Thomas Pasquier-Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. |
+| **Lélia Hervy** | Wrote most of the code: exploration, feature engineering, pipeline, class-imbalance comparison, model comparison, tuning, calibration, SHAP, fairness and pay-equity audit, API. Merged the analysis into the final notebook, applied the graphic identity to the figures, and maintains the repository. | Concatenated the different files (from our originally shared Drive) and added them in the GitHub.
+| **Thomas Pasquier--Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. | 
 | **Robin Cacarié** | Proposed framing the project around a real problem: the government pay-equity regulator. Created the GitHub repository. Reviewed and modified the code. Prepared the slides for the final presentation. |
 
 All three members contributed equally to the report and the oral defense, and can explain every part of the project.
@@ -164,6 +165,5 @@ All three members contributed equally to the report and the oral defense, and ca
 We used Claude (Anthropic) as a coding assistant, mainly to:
 - generate and explain code concerning the **modeling part**
 - check the results for consistency;
-- suggest improvements based on the course material.
+- suggest improvements based on the course material, so that we know if we followed the proper "structure"/ "order".
 
-We reviewed, ran and modified all of the code ourselves. Every methodological choice was discussed and validated by the team. Details are in the report.
