@@ -130,6 +130,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 6. **Calibration:** `CalibratedClassifierCV(cv=5)`. Isotonic is chosen over sigmoid on Brier score and ECE.
 7. **Explainability:** SHAP `TreeExplainer`, with global and individual explanations.
 8. **Fairness:**
+   - our definition: "equal pay for equal work" (conditional parity), measured by the unexplained gap of each group;
    - fairlearn `MetricFrame`: demographic parity, equal opportunity, equalized odds;
    - pay-equity audit with bootstrap confidence intervals;
    - before/after comparison of the mitigation (pre-processing);
@@ -154,7 +155,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 |---|---|
 | **Lélia Hervy** | Wrote most of the code: exploration, feature engineering, pipeline, class-imbalance comparison, model comparison, tuning, calibration, SHAP, fairness and pay-equity audit, API. Merged the analysis into the final notebook, applied the graphic identity to the figures, and maintains the repository. |
 | **Thomas Pasquier-Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. |
-| **Robin Cacarié** | Proposed framing the project around a real problem: the government pay-equity regulator. Created the GitHub repository. Reviewed and modified the code. |
+| **Robin Cacarié** | Proposed framing the project around a real problem: the government pay-equity regulator. Created the GitHub repository. Reviewed and modified the code. Prepared the slides for the final presentation. |
 
 All three members contributed equally to the report and the oral defense, and can explain every part of the project.
 
