@@ -144,7 +144,11 @@ def audit(request: AuditRequest):
 # ---------- web interface ----------
 @app.get("/", include_in_schema=False)
 def web_interface():
-    return FileResponse(HERE / "static" / "index.html")
+    page = HERE / "static" / "index.html"
+    if not page.exists():   # e.g. a serving/ folder written by the notebook in Colab
+        raise HTTPException(status_code=404, detail="The web interface (serving/static/index.html) is in the GitHub "
+                                                    "repository. The endpoints are documented at /docs.")
+    return FileResponse(page)
 
 
 @app.get("/options")
