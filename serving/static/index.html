@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pay-equity audit</title>
+<style>
+  :root {
+    color-scheme: light;
+    --navy: #1C5AA3;
+    --navy-soft: #E8F0FA;
+    --sky: #74B9EE;
+    --violet: #8170D8;
+    --violet-soft: #EFECFB;
+    --steel: #5F6B7A;
+    --silver: #C5CDD6;
+    --line: #E3E8EE;
+    --ink: #2B2F36;
+    --muted: #6B7480;
+    --bg: #F5F7FA;
+    --card: #FFFFFF;
+    --good: #1E7F4F;
+    --good-soft: #E6F4EC;
+    --warn: #A15C00;
+    --warn-soft: #FDF1E1;
+    --bad: #B42318;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- header ---------- */
+  header { background: var(--card); border-bottom: 1px solid var(--line); }
+  .top { display: flex; align-items: center; gap: 16px; padding: 16px 0 0; flex-wrap: wrap; }
+  .brand { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand small { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); }
+  .model-chip {
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--steel); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--silver); flex: none; }
+  .dot.ok { background: var(--good); }
+  .dot.down { background: var(--bad); }
+  .model-chip a { color: var(--navy); text-decoration: none; }
+  .model-chip a:hover { text-decoration: underline; }
+  nav { display: flex; gap: 4px; margin-top: 12px; }
+  nav button {
+    border: 0; background: none; padding: 10px 14px; cursor: pointer; color: var(--muted);
+    font-weight: 600; border-bottom: 2px solid transparent;
+  }
+  nav button:hover { color: var(--ink); }
+  nav button[aria-selected="true"] { color: var(--navy); border-bottom-color: var(--navy); }
+
+  main { padding: 22px 0 60px; }
+  .view[hidden] { display: none; }
+  .intro { color: var(--muted); margin: 0 0 18px; max-width: 760px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .card h2 { font-size: 15px; margin: 0 0 4px; }
+  .card .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 14px; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    border: 1px solid var(--silver); background: var(--card); border-radius: 8px;
+    padding: 7px 12px; font-weight: 600; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--steel); }
+  .btn.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .btn.primary:hover { background: #174B89; }
+  .btn:disabled { opacity: .55; cursor: progress; }
+  .link-btn { border: 0; background: none; color: var(--navy); cursor: pointer; padding: 0; font-weight: 600; }
+  .link-btn:hover { text-decoration: underline; }
+
+  /* ---------- form ---------- */
+  .simulator { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .source {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 12px; margin-bottom: 16px; border-radius: 8px; background: var(--bg); font-size: 13px;
+  }
+  .source .grow { flex: 1; min-width: 160px; color: var(--muted); }
+  .source strong { color: var(--ink); }
+  fieldset { border: 0; padding: 0; margin: 0 0 14px; }
+  legend { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--steel); margin-bottom: 8px; }
+  legend span { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+  .field label .hint { font-weight: 400; color: var(--muted); }
+  .field input, .field select, .controls select {
+    width: 100%; height: 36px; padding: 0 10px; background: var(--card);
+    border: 1px solid var(--silver); border-radius: 8px; outline: none;
+  }
+  .field input:focus, .field select:focus, .controls select:focus { border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-soft); }
+  .field.invalid input { border-color: var(--bad); }
+  .field .err { color: var(--bad); font-size: 12px; min-height: 0; margin-top: 3px; }
+  .field .err:empty { display: none; }
+  .protected { padding-top: 12px; border-top: 1px dashed var(--line); }
+
+  /* ---------- prediction result ---------- */
+  .result { position: sticky; top: 16px; }
+  .prob { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+  .prob-label { color: var(--muted); font-size: 13px; }
+  .meter { position: relative; height: 10px; border-radius: 999px; background: var(--line); margin: 18px 0 6px; }
+  .meter .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--navy); transition: width .25s ease; }
+  .meter .tick { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--ink); }
+  .meter-scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); position: relative; }
+  .meter-scale .thr { position: absolute; transform: translateX(-50%); color: var(--ink); font-weight: 600; }
+  .verdict { margin-top: 18px; padding: 12px 14px; border-radius: 8px; font-weight: 600; }
+  .verdict.high { background: var(--navy-soft); color: var(--navy); }
+  .verdict.low { background: var(--bg); color: var(--steel); }
+  .compare { margin-top: 12px; font-size: 13px; display: grid; gap: 6px; }
+  .compare .row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.good { background: var(--good-soft); color: var(--good); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.neutral { background: var(--bg); color: var(--steel); }
+  .note { font-size: 12.5px; color: var(--muted); margin-top: 14px; }
+  .api-error { color: var(--bad); font-size: 13px; margin-top: 10px; }
+  .api-error:empty { display: none; }
+
+  /* ---------- audit ---------- */
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; }
+  .controls .field { min-width: 150px; }
+  .controls .checks { display: flex; gap: 12px; height: 36px; align-items: center; }
+  .controls .checks label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; cursor: pointer; }
+  .controls .run { margin-left: auto; }
+  .status-line { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+  .kpi .k { font-size: 12px; color: var(--muted); }
+  .kpi .v { font-size: 26px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi .s { font-size: 12px; color: var(--muted); }
+
+  .howto { font-size: 13px; color: var(--steel); background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--navy); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; }
+  .howto b { color: var(--ink); }
+
+  .forest { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .forest th { text-align: left; font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .forest td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+  .forest td.num, .forest th.num { text-align: right; }
+  .forest td.plot { width: 38%; min-width: 220px; padding: 0 8px; }
+  .forest tr:last-child td { border-bottom: 0; }
+  .forest .gname { font-weight: 600; }
+  .forest .gap-neg { color: var(--violet); font-weight: 700; }
+  .forest .gap-pos { color: var(--navy); font-weight: 700; }
+  .forest .gap-ns { color: var(--steel); }
+  .forest .ci { color: var(--muted); font-size: 12px; }
+  .forest .small { opacity: .55; }
+  .plot svg { display: block; width: 100%; height: 28px; overflow: visible; }
+  .axis-row td { border-bottom: 0; padding-top: 0; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .attr-card { margin-bottom: 16px; overflow-x: auto; }
+
+  .people-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .people-head h2 { margin: 0; }
+  .people-head .toggle { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+  .table-scroll { overflow-x: auto; }
+  table.people { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  table.people th { position: sticky; top: 0; background: var(--card); text-align: left; font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; cursor: pointer; user-select: none; }
+  table.people th:hover { color: var(--ink); }
+  table.people th.sorted::after { content: " ↓"; }
+  table.people th.sorted.asc::after { content: " ↑"; }
+  table.people td { padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.people tbody tr { cursor: pointer; }
+  table.people tbody tr:hover { background: var(--bg); }
+  table.people tr.flagged td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+  .pbar { display: inline-block; width: 60px; height: 6px; background: var(--line); border-radius: 999px; margin-right: 8px; vertical-align: middle; position: relative; }
+  .pbar b { position: absolute; inset: 0 auto 0 0; background: var(--navy); border-radius: 999px; }
+  .more { text-align: center; margin-top: 12px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: #fff;
+    font-size: 12px; padding: 8px 10px; border-radius: 6px; max-width: 280px; line-height: 1.5;
+    opacity: 0; transition: opacity .1s;
+  }
+  .tooltip.show { opacity: 1; }
+
+  @media (max-width: 860px) {
+    .simulator { grid-template-columns: 1fr; }
+    .result { position: static; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .model-chip { margin-left: 0; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 0 16px; }
+    .grid { grid-template-columns: 1fr; }
+    .controls .run { margin-left: 0; width: 100%; }
+    .controls .run .btn { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        Pay-equity audit
+        <small>Reference pay model trained on job-related factors only (Adult census data)</small>
+      </div>
+      <div class="model-chip"><span class="dot" id="health-dot"></span><span id="model-text">Connecting to the API…</span> · <a href="/docs" target="_blank">API docs</a></div>
+    </div>
+    <nav role="tablist">
+      <button role="tab" aria-selected="true" data-view="person">One person</button>
+      <button role="tab" aria-selected="false" data-view="audit">Audit a population</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ ONE PERSON ============ -->
+  <section class="view" id="view-person">
+    <p class="intro">Describe a job profile, or load a real person from the test set. The model estimates the probability that someone with this profile earns more than $50K. The estimate updates as you edit.</p>
+
+    <div class="simulator">
+      <form class="card" id="person-form" novalidate autocomplete="off">
+        <div class="source">
+          <span class="grow" id="source-text">Custom profile.</span>
+          <button type="button" class="btn" id="load-person">Load a real person</button>
+          <button type="button" class="link-btn" id="reset-person">Reset</button>
+        </div>
+
+        <fieldset>
+          <legend>Job profile <span>· used by the model</span></legend>
+          <div class="grid">
+            <div class="field">
+              <label for="f-age">Age <span class="hint">16 to 99</span></label>
+              <input id="f-age" name="age" type="number" min="16" max="99" step="1" inputmode="numeric">
+              <div class="err"></div>
+            </div>
+            <div class="field">
+              <label for="f-education">Education</label>
+              <select id="f-education" name="education-num"></select>
+              <div class="err"></div>
+            </div>
+            <div class="field">
+              <label for="f-workclass">Workclass</label>
+              <select id="f-workclass" name="workclass"></select>
+              <div class="err"></div>
+            </div>
+            <div class="field">
+              <label for="f-occupation">Occupation</label>
+              <select id="f-occupation" name="occupation"></select>
+              <div class="err"></div>
+            </div>
+            <div class="field">
+              <label for="f-hours">Hours per week <span class="hint">1 to 99</span></label>
+              <input id="f-hours" name="hours-per-week" type="number" min="1" max="99" step="1" inputmode="numeric">
+              <div class="err"></div>
+            </div>
+            <div class="field"></div>
+            <div class="field">
+              <label for="f-gain">Capital gain <span class="hint">$ per year</span></label>
+              <input id="f-gain" name="capital-gain" type="number" min="0" step="1" inputmode="numeric">
+              <div class="err"></div>
+            </div>
+            <div class="field">
+              <label for="f-loss">Capital loss <span class="hint">$ per year</span></label>
+              <input id="f-loss" name="capital-loss" type="number" min="0" step="1" inputmode="numeric">
+              <div class="err"></div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="protected">
+          <legend>Group <span>· never used by the model, only to group audit results</span></legend>
+          <div class="grid">
+            <div class="field">
+              <label for="f-sex">Sex</label>
+              <select id="f-sex" name="sex"></select>
+            </div>
+            <div class="field">
+              <label for="f-race">Race</label>
+              <select id="f-race" name="race"></select>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+
+      <aside class="card result" aria-live="polite">
+        <h2>Expected pay level</h2>
+        <div class="prob" id="prob">–</div>
+        <div class="prob-label">probability of earning more than $50K</div>
+        <div class="meter"><div class="fill" id="meter-fill" style="width:0"></div><div class="tick" id="meter-tick"></div></div>
+        <div class="meter-scale"><span>0%</span><span class="thr" id="thr-label"></span><span>100%</span></div>
+        <div class="verdict low" id="verdict">Fill in the profile.</div>
+        <div class="compare" id="compare"></div>
+        <div class="api-error" id="person-error"></div>
+        <p class="note">Sex and race do not change the estimate: the model never sees them. Changing them only shows which audit group the person falls in.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ AUDIT ============ -->
+  <section class="view" id="view-audit" hidden>
+    <p class="intro">Draw real employees from the test set (people the model never saw during training) and compare, for each group, the share who actually earn more than $50K with the share the model expects from their job profile.</p>
+
+    <div class="card">
+      <div class="controls">
+        <div class="field">
+          <label for="a-size">Employees</label>
+          <select id="a-size">
+            <option value="200">200</option>
+            <option value="500">500</option>
+            <option value="2000" selected>2,000</option>
+            <option value="5000">5,000</option>
+            <option value="all">Whole test set</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="a-occupation">Occupation</label>
+          <select id="a-occupation"></select>
+        </div>
+        <div class="field">
+          <label for="a-workclass">Workclass</label>
+          <select id="a-workclass"></select>
+        </div>
+        <div class="field">
+          <label>Group by</label>
+          <div class="checks">
+            <label><input type="checkbox" name="group_by" value="sex" checked> Sex</label>
+            <label><input type="checkbox" name="group_by" value="race" checked> Race</label>
+          </div>
+        </div>
+        <div class="run"><button class="btn primary" id="run-audit">Draw employees and run the audit</button></div>
+      </div>
+      <div class="status-line" id="audit-status"></div>
+      <div class="api-error" id="audit-error"></div>
+    </div>
+
+    <div id="audit-results" hidden>
+      <div class="kpis" id="kpis"></div>
+
+      <div class="howto">
+        <b>Unexplained gap</b> = actual share of high earners − share expected from the job profile, in percentage points.
+        A <b>negative</b> gap means the group earns less than its profile predicts. It is <b>significant</b> when its 95% confidence interval does not cross 0.
+        It is a reason to investigate, not a proof of discrimination.
+      </div>
+
+      <div id="group-cards"></div>
+
+      <div class="card">
+        <div class="people-head">
+          <h2>Employees</h2>
+          <span class="sub" style="margin:0" id="people-count"></span>
+          <label class="toggle"><input type="checkbox" id="only-flagged"> Only potentially underpaid</label>
+        </div>
+        <div class="table-scroll">
+          <table class="people">
+            <thead><tr id="people-thead"></tr></thead>
+            <tbody id="people-tbody"></tbody>
+          </table>
+        </div>
+        <div class="more" id="people-more"></div>
+        <p class="note">Potentially underpaid (orange mark): the model expects more than $50K but the person earns $50K or less. Click a row to open the person in the simulator.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+
+<script>
+const API = "";                      // same origin as the page
+let OPTIONS = null;
+let THRESHOLD = 0.5;
+
+// ---------- small helpers ----------
+const $ = (sel, root = document) => root.querySelector(sel);
+const pct = (x, d = 1) => (100 * x).toFixed(d) + "%";
+const fmtInt = n => n.toLocaleString("en-US");
+const signed = (x, d = 1) => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const label = v => v == null ? "Unknown" : String(v).replace(/-/g, " ");
+
+async function api(path, body) {
+  const res = await fetch(API + path, body === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const d = data.detail;
+    throw new Error(Array.isArray(d) ? d.map(e => `${e.loc?.slice(-1)[0]}: ${e.msg}`).join("; ") : (d || res.statusText));
+  }
+  return data;
+}
+
+function fillSelect(select, values, { unknown = false, all = false } = {}) {
+  select.innerHTML = "";
+  if (all) select.add(new Option("All", ""));
+  for (const v of values) select.add(new Option(label(v), v));
+  if (unknown) select.add(new Option("Unknown", "__null__"));
+}
+
+// ---------- tabs ----------
+document.querySelectorAll("nav button").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
+function showView(name) {
+  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === name));
+  document.querySelectorAll(".view").forEach(v => v.hidden = v.id !== "view-" + name);
+}
+
+// ---------- tooltip ----------
+const tip = $("#tooltip");
+function showTip(html, ev) {
+  tip.innerHTML = html; tip.classList.add("show");
+  const x = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  const y = ev.clientY + 14 + tip.offsetHeight > window.innerHeight ? ev.clientY - tip.offsetHeight - 10 : ev.clientY + 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => tip.classList.remove("show");
+
+// =====================================================================
+// ONE PERSON
+// =====================================================================
+const form = $("#person-form");
+const DEFAULT_PERSON = {
+  age: 38, "education-num": 13, workclass: "Private", occupation: "Prof-specialty",
+  "hours-per-week": 40, "capital-gain": 0, "capital-loss": 0, sex: "Female", race: "White",
+};
+let loadedPerson = null;      // the real person currently loaded, if any
+let predictTimer = null;
+let predictSeq = 0;
+
+function setForm(p) {
+  for (const el of form.elements) {
+    if (!el.name) continue;
+    const v = p[el.name];
+    el.value = el.tagName === "SELECT" && v == null ? "__null__" : v;
+  }
+  validateForm();
+}
+
+function readForm() {
+  const p = {};
+  for (const el of form.elements) {
+    if (!el.name) continue;
+    if (el.tagName === "SELECT") p[el.name] = el.value === "__null__" ? null : (el.name === "education-num" ? Number(el.value) : el.value);
+    else p[el.name] = el.value === "" ? NaN : Number(el.value);
+  }
+  return p;
+}
+
+const RULES = {
+  age: [16, 99, "Enter an age between 16 and 99."],
+  "hours-per-week": [1, 99, "Enter between 1 and 99 hours."],
+  "capital-gain": [0, 1e7, "Enter 0 or a positive amount."],
+  "capital-loss": [0, 1e7, "Enter 0 or a positive amount."],
+};
+function validateForm() {
+  let ok = true;
+  for (const [name, [min, max, msg]] of Object.entries(RULES)) {
+    const el = form.elements[name];
+    const v = Number(el.value);
+    const bad = el.value === "" || !Number.isInteger(v) || v < min || v > max;
+    el.closest(".field").classList.toggle("invalid", bad);
+    el.closest(".field").querySelector(".err").textContent = bad ? msg : "";
+    ok = ok && !bad;
+  }
+  return ok;
+}
+
+function samePerson(a, b) {
+  return Object.keys(DEFAULT_PERSON).every(k => (a[k] ?? null) === (b[k] ?? null));
+}
+
+function schedulePredict() {
+  clearTimeout(predictTimer);
+  predictTimer = setTimeout(runPredict, 180);
+}
+
+async function runPredict() {
+  $("#person-error").textContent = "";
+  if (!validateForm()) {
+    $("#verdict").className = "verdict low";
+    $("#verdict").textContent = "Fix the highlighted fields.";
+    $("#prob").textContent = "–";
+    $("#meter-fill").style.width = "0";
+    $("#compare").innerHTML = "";
+    return;
+  }
+  const person = readForm();
+  const seq = ++predictSeq;
+  try {
+    const { predictions } = await api("/predict", { employees: [person] });
+    if (seq !== predictSeq) return;            // a newer request is on its way
+    renderPrediction(person, predictions[0]);
+  } catch (e) {
+    $("#person-error").textContent = "The API refused the request: " + e.message;
+  }
+}
+
+function renderPrediction(person, pred) {
+  const p = pred.expected_probability;
+  $("#prob").textContent = pct(p);
+  $("#meter-fill").style.width = (100 * p) + "%";
+  const v = $("#verdict");
+  v.className = "verdict " + (pred.expected_over_50k ? "high" : "low");
+  v.textContent = pred.expected_over_50k
+    ? `Expected to earn more than $50K (above the ${pct(THRESHOLD, 0)} threshold)`
+    : `Expected to earn $50K or less (below the ${pct(THRESHOLD, 0)} threshold)`;
+
+  const cmp = $("#compare");
+  if (loadedPerson && samePerson(person, loadedPerson)) {
+    const actual = loadedPerson.income_over_50k === 1;
+    let status;
+    if (pred.expected_over_50k && !actual) status = `<span class="badge warn">⚑ Potentially underpaid</span>`;
+    else if (pred.expected_over_50k === actual) status = `<span class="badge good">✓ Paid as expected</span>`;
+    else status = `<span class="badge neutral">Earns more than expected</span>`;
+    cmp.innerHTML = `
+      <div class="row"><span>Actual pay of person #${loadedPerson.id}</span><strong>${actual ? "More than $50K" : "$50K or less"}</strong></div>
+      <div class="row"><span>Compared with the model</span>${status}</div>`;
+  } else if (loadedPerson) {
+    cmp.innerHTML = `<div class="row"><span>Profile edited: the actual pay of person #${loadedPerson.id} no longer applies.</span></div>`;
+  } else {
+    cmp.innerHTML = "";
+  }
+}
+
+function updateSourceText() {
+  const person = readForm();
+  if (!loadedPerson) $("#source-text").innerHTML = "Custom profile.";
+  else if (samePerson(person, loadedPerson)) $("#source-text").innerHTML = `Real person <strong>#${loadedPerson.id}</strong> from the test set.`;
+  else $("#source-text").innerHTML = `Based on person <strong>#${loadedPerson.id}</strong>, edited.`;
+}
+
+function openPerson(p) {
+  loadedPerson = p;
+  setForm(p);
+  updateSourceText();
+  runPredict();
+}
+
+form.addEventListener("input", () => { updateSourceText(); schedulePredict(); });
+form.addEventListener("submit", e => e.preventDefault());
+$("#reset-person").addEventListener("click", () => { loadedPerson = null; setForm(DEFAULT_PERSON); updateSourceText(); runPredict(); });
+$("#load-person").addEventListener("click", async () => {
+  const btn = $("#load-person");
+  btn.disabled = true;
+  try {
+    const { people } = await api("/people?n=1");
+    openPerson(people[0]);
+  } catch (e) {
+    $("#person-error").textContent = "Could not load a person: " + e.message;
+  } finally { btn.disabled = false; }
+});
+
+// =====================================================================
+// AUDIT
+// =====================================================================
+let auditRows = [];           // employees of the last audit, with their expected probability
+let sortKey = "flagged", sortAsc = false, shown = 100;   // potentially underpaid first
+
+$("#run-audit").addEventListener("click", runAudit);
+$("#only-flagged").addEventListener("change", () => { shown = 100; renderPeople(); });
+
+async function runAudit() {
+  const btn = $("#run-audit");
+  const groupBy = [...document.querySelectorAll("input[name=group_by]:checked")].map(c => c.value);
+  $("#audit-error").textContent = "";
+  if (!groupBy.length) { $("#audit-error").textContent = "Choose at least one group (sex or race)."; return; }
+
+  const size = $("#a-size").value === "all" ? OPTIONS.n_people : Number($("#a-size").value);
+  const seed = Math.floor(Math.random() * 1e6);
+  const params = new URLSearchParams({ n: size, seed });
+  if ($("#a-occupation").value) params.set("occupation", $("#a-occupation").value);
+  if ($("#a-workclass").value) params.set("workclass", $("#a-workclass").value);
+
+  btn.disabled = true;
+  $("#audit-status").textContent = "Drawing employees…";
+  const t0 = performance.now();
+  try {
+    const { people, n_matching } = await api("/people?" + params);
+    $("#audit-status").textContent = `Auditing ${fmtInt(people.length)} employees…`;
+    const result = await api("/audit", { employees: people, group_by: groupBy });
+    const flagged = new Set(result.flagged_underpaid_rows);
+    auditRows = people.map((p, i) => ({ ...p, expected: result.expected_probabilities[i], flagged: flagged.has(i) }));
+    renderAudit(result, groupBy);
+    const filters = [$("#a-occupation").value, $("#a-workclass").value].filter(Boolean).map(label);
+    $("#audit-status").textContent =
+      `${fmtInt(people.length)} employees drawn at random out of ${fmtInt(n_matching)} in the test set` +
+      (filters.length ? ` (${filters.join(", ")})` : "") +
+      ` · sample #${seed} · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+  } catch (e) {
+    $("#audit-status").textContent = "";
+    $("#audit-error").textContent = "The audit failed: " + e.message;
+  } finally { btn.disabled = false; }
+}
+
+function renderAudit(result, groupBy) {
+  $("#audit-results").hidden = false;
+  const n = auditRows.length;
+  const actual = auditRows.reduce((s, r) => s + r.income_over_50k, 0) / n;
+  const expected = auditRows.reduce((s, r) => s + r.expected, 0) / n;
+  const nFlag = result.flagged_underpaid_rows.length;
+  $("#kpis").innerHTML = [
+    ["Employees audited", fmtInt(n), "real people from the test set"],
+    ["Actually earn > $50K", pct(actual), `${fmtInt(Math.round(actual * n))} people`],
+    ["Expected to earn > $50K", pct(expected), "average probability from the model"],
+    ["Potentially underpaid", fmtInt(nFlag), `${pct(nFlag / n)} of employees`],
+  ].map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+
+  // one common scale for every chart, based on groups large enough to be read
+  const all = Object.values(result.groups).flat();
+  const readable = all.filter(g => g.enough_data);
+  const extent = Math.max(5, ...(readable.length ? readable : all).flatMap(g => g.ci_95_pts.map(Math.abs)));
+  const domain = Math.ceil(extent / 5) * 5;
+
+  const names = { sex: "Sex", race: "Race" };
+  $("#group-cards").innerHTML = groupBy.filter(c => result.groups[c]).map(col => `
+    <div class="card attr-card">
+      <h2>By ${names[col].toLowerCase()}</h2>
+      <p class="sub">Groups sorted from the largest shortfall to the largest surplus.</p>
+      <table class="forest">
+        <thead><tr>
+          <th>Group</th><th class="num">Employees</th><th class="num">Actual</th><th class="num">Expected</th>
+          <th>Unexplained gap (points, 95% CI)</th><th class="num">Gap</th><th class="num">Underpaid</th>
+        </tr></thead>
+        <tbody>
+          ${result.groups[col].map(g => forestRow(g, domain)).join("")}
+          <tr class="axis-row"><td colspan="4"></td><td class="plot">${axisSvg(domain)}</td><td colspan="2"></td></tr>
+        </tbody>
+      </table>
+      <div class="legend">
+        <span><i style="background:var(--violet)"></i>Significant shortfall</span>
+        <span><i style="background:var(--navy)"></i>Significant surplus</span>
+        <span><i style="background:var(--silver)"></i>Not significant</span>
+        <span>Faded rows: fewer than ${OPTIONS.min_group_size} employees, not reliable</span>
+      </div>
+    </div>`).join("");
+
+  document.querySelectorAll(".forest tr[data-tip]").forEach(tr => {
+    tr.addEventListener("mousemove", ev => showTip(tr.dataset.tip, ev));
+    tr.addEventListener("mouseleave", hideTip);
+  });
+
+  shown = 100;
+  renderPeople();
+}
+
+function gapColor(g) {
+  if (!g.significant) return "var(--silver)";
+  return g.unexplained_gap_pts < 0 ? "var(--violet)" : "var(--navy)";
+}
+
+function forestRow(g, domain) {
+  const W = 300, H = 28, mid = H / 2;
+  const x = v => W / 2 + (Math.max(-domain, Math.min(domain, v)) / domain) * (W / 2 - 6);
+  const [lo, hi] = g.ci_95_pts;
+  const color = gapColor(g);
+  const clipL = lo < -domain, clipR = hi > domain;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="${W / 2}" x2="${W / 2}" y1="0" y2="${H}" stroke="var(--steel)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+      <line x1="${x(lo)}" x2="${x(hi)}" y1="${mid}" y2="${mid}" stroke="${color}" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      ${clipL ? `<path d="M${x(lo) + 5},${mid - 4} L${x(lo)},${mid} L${x(lo) + 5},${mid + 4}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/>` : ""}
+      ${clipR ? `<path d="M${x(hi) - 5},${mid - 4} L${x(hi)},${mid} L${x(hi) - 5},${mid + 4}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/>` : ""}
+    </svg>`;
+  // the dot is drawn in HTML so it stays round when the SVG stretches
+  const left = (x(g.unexplained_gap_pts) / W) * 100;
+  const cls = g.significant ? (g.unexplained_gap_pts < 0 ? "gap-neg" : "gap-pos") : "gap-ns";
+  const tipHtml = esc(`<b>${label(g.group)}</b> · ${fmtInt(g.n)} employees<br>`) +
+    esc(`Actual ${pct(g.actual_rate)} vs expected ${pct(g.expected_rate)}<br>`) +
+    esc(`Gap ${signed(g.unexplained_gap_pts)} points, 95% CI [${signed(lo)}, ${signed(hi)}]<br>`) +
+    esc(g.significant ? "Significant" : "Not significant") + (g.enough_data ? "" : esc(" · too few employees to conclude"));
+  return `<tr class="${g.enough_data ? "" : "small"}" data-tip="${tipHtml}">
+    <td class="gname">${esc(label(g.group))}</td>
+    <td class="num">${fmtInt(g.n)}</td>
+    <td class="num">${pct(g.actual_rate)}</td>
+    <td class="num">${pct(g.expected_rate)}</td>
+    <td class="plot"><div style="position:relative">${svg}<span style="position:absolute;top:50%;left:${left}%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:${color};box-shadow:0 0 0 2px var(--card)"></span></div></td>
+    <td class="num"><span class="${cls}">${signed(g.unexplained_gap_pts)}</span> <span class="ci">[${signed(lo)}, ${signed(hi)}]</span></td>
+    <td class="num">${fmtInt(g.n_flagged_underpaid)}</td>
+  </tr>`;
+}
+
+function axisSvg(domain) {
+  const W = 300;
+  const ticks = [-domain, -domain / 2, 0, domain / 2, domain];
+  const x = v => W / 2 + (v / domain) * (W / 2 - 6);
+  return `<div style="position:relative;height:16px;font-size:11px;color:var(--muted)">${ticks.map(t =>
+    `<span style="position:absolute;left:${(x(t) / W) * 100}%;transform:translateX(-50%)">${t === 0 ? "0" : signed(t, 0)}</span>`).join("")}</div>`;
+}
+
+// ---------- employees table ----------
+const COLUMNS = [
+  ["id", "ID", r => "#" + r.id],
+  ["age", "Age", r => r.age],
+  ["education-num", "Education", r => esc(OPTIONS.education_levels[r["education-num"]] || r["education-num"])],
+  ["occupation", "Occupation", r => esc(label(r.occupation))],
+  ["hours-per-week", "Hours", r => r["hours-per-week"]],
+  ["sex", "Sex", r => esc(r.sex)],
+  ["race", "Race", r => esc(label(r.race))],
+  ["expected", "Expected > $50K", r => `<span class="pbar"><b style="width:${100 * r.expected}%"></b></span>${pct(r.expected, 0)}`],
+  ["income_over_50k", "Actual", r => r.income_over_50k ? "> $50K" : "≤ $50K"],
+  ["flagged", "Status", r => r.flagged ? `<span class="badge warn">⚑ Potentially underpaid</span>` : ""],
+];
+
+$("#people-thead").innerHTML = COLUMNS.map(([k, t]) => `<th data-key="${k}">${t}</th>`).join("");
+$("#people-thead").addEventListener("click", ev => {
+  const th = ev.target.closest("th"); if (!th) return;
+  if (sortKey === th.dataset.key) sortAsc = !sortAsc; else { sortKey = th.dataset.key; sortAsc = false; }
+  renderPeople();
+});
+
+function renderPeople() {
+  const onlyFlagged = $("#only-flagged").checked;
+  let rows = onlyFlagged ? auditRows.filter(r => r.flagged) : auditRows.slice();
+  rows.sort((a, b) => {
+    const va = a[sortKey], vb = b[sortKey];
+    const cmp = va == null ? 1 : vb == null ? -1 : (va > vb ? 1 : va < vb ? -1 : 0);
+    if (cmp === 0) return b.expected - a.expected;      // ties: highest expected first
+    return sortAsc ? cmp : -cmp;
+  });
+  document.querySelectorAll("#people-thead th").forEach(th => {
+    th.classList.toggle("sorted", th.dataset.key === sortKey);
+    th.classList.toggle("asc", th.dataset.key === sortKey && sortAsc);
+  });
+  $("#people-count").textContent = `${fmtInt(rows.length)} ${onlyFlagged ? "potentially underpaid" : "employees"}`;
+  const tbody = $("#people-tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="${COLUMNS.length}" class="empty">Nobody to show.</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.slice(0, shown).map(r =>
+      `<tr data-id="${r.id}" class="${r.flagged ? "flagged" : ""}">${COLUMNS.map(([, , f]) => `<td>${f(r)}</td>`).join("")}</tr>`).join("");
+  }
+  $("#people-more").innerHTML = rows.length > shown
+    ? `<button class="btn" id="show-more">Show ${fmtInt(Math.min(100, rows.length - shown))} more (${fmtInt(rows.length - shown)} hidden)</button>` : "";
+  const more = $("#show-more");
+  if (more) more.addEventListener("click", () => { shown += 100; renderPeople(); });
+}
+
+$("#people-tbody").addEventListener("click", ev => {
+  const tr = ev.target.closest("tr[data-id]"); if (!tr) return;
+  const r = auditRows.find(x => String(x.id) === tr.dataset.id);
+  if (!r) return;
+  const { expected, flagged, ...person } = r;
+  showView("person");
+  openPerson(person);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+// =====================================================================
+// START
+// =====================================================================
+(async function start() {
+  try {
+    OPTIONS = await api("/options");
+    THRESHOLD = OPTIONS.model.threshold;
+    const m = OPTIONS.model;
+    $("#health-dot").className = "dot ok";
+    $("#model-text").textContent = `${m.model_type}, ${m.calibration_method} calibration · ROC-AUC ${m.test_roc_auc.toFixed(3)} · threshold ${THRESHOLD}`;
+  } catch (e) {
+    $("#health-dot").className = "dot down";
+    $("#model-text").textContent = "API unreachable: is uvicorn running?";
+    return;
+  }
+
+  const edu = Object.entries(OPTIONS.education_levels).map(([k, v]) => [Number(k), v]);
+  const eduSelect = $("#f-education");
+  for (const [k, v] of edu) eduSelect.add(new Option(`${label(v)} (level ${k})`, k));
+  fillSelect($("#f-workclass"), OPTIONS.workclass, { unknown: true });
+  fillSelect($("#f-occupation"), OPTIONS.occupation, { unknown: true });
+  fillSelect($("#f-sex"), OPTIONS.sex);
+  fillSelect($("#f-race"), OPTIONS.race);
+  fillSelect($("#a-occupation"), OPTIONS.occupation, { all: true });
+  fillSelect($("#a-workclass"), OPTIONS.workclass, { all: true });
+  $("#a-size").querySelector('option[value="all"]').textContent = `Whole test set (${fmtInt(OPTIONS.n_people)})`;
+
+  $("#meter-tick").style.left = `calc(${100 * THRESHOLD}% - 1px)`;
+  $("#thr-label").style.left = (100 * THRESHOLD) + "%";
+  $("#thr-label").textContent = `threshold ${pct(THRESHOLD, 0)}`;
+
+  setForm(DEFAULT_PERSON);
+  runPredict();
+})();
+</script>
+</body>
+</html>

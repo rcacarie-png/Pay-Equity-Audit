@@ -33,6 +33,14 @@ with open(f"{SERVING_DIR}/model_info.json", "w") as f:
 
 display(model_info)
 
+# Real people of the test set for the web interface (serving/static/index.html): the people it draws
+# for the audit and the "Load a real person" button. Same columns as the API input.
+people_columns = ["age", "workclass", "education-num", "occupation", "capital-gain", "capital-loss",
+                  "hours-per-week", "sex", "race"]
+test_people = X_test[people_columns].assign(**{TARGET: y_test.values})
+test_people.index.name = "id"
+test_people.to_csv(f"{SERVING_DIR}/test_people.csv")
+
 # ==============================================================================
 # Write the API
 # ==============================================================================

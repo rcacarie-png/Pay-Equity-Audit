@@ -1,7 +1,8 @@
 """Pay-equity audit API.
 
 Run locally with:   uvicorn audit_api:app --reload   (from inside the serving/ folder)
-Then open http://127.0.0.1:8000/docs for the interactive documentation.
+Then open http://127.0.0.1:8000 for the web interface,
+or http://127.0.0.1:8000/docs for the interactive documentation of the endpoints.
 """
 import json
 from pathlib import Path
@@ -10,7 +11,8 @@ from typing import List, Optional
 import cloudpickle
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 HERE = Path(__file__).parent
@@ -21,6 +23,15 @@ with open(HERE / "audit_model.pkl", "rb") as f:
 with open(HERE / "model_info.json") as f:
     INFO = json.load(f)
 THRESHOLD = INFO["threshold"]
+
+# real people of the test set (never seen during training), used by the web interface
+PEOPLE = pd.read_csv(HERE / "test_people.csv", index_col="id")
+
+EDUCATION_LEVELS = {
+    1: "Preschool", 2: "1st-4th", 3: "5th-6th", 4: "7th-8th", 5: "9th", 6: "10th", 7: "11th", 8: "12th",
+    9: "HS-grad", 10: "Some-college", 11: "Assoc-voc", 12: "Assoc-acdm", 13: "Bachelors", 14: "Masters",
+    15: "Prof-school", 16: "Doctorate",
+}
 
 
 # ---------- input format ----------
@@ -126,4 +137,53 @@ def audit(request: AuditRequest):
         "threshold": THRESHOLD,
         "groups": results,
         "flagged_underpaid_rows": np.flatnonzero(flagged).tolist(),
+        "expected_probabilities": [round(float(p), 4) for p in expected],
+    }
+
+
+# ---------- web interface ----------
+@app.get("/", include_in_schema=False)
+def web_interface():
+    return FileResponse(HERE / "static" / "index.html")
+
+
+@app.get("/options")
+def options():
+    """Choices offered by the web form, taken from the data (most frequent first)."""
+    def choices(column):
+        return PEOPLE[column].value_counts().index.tolist()
+
+    return {
+        "workclass": choices("workclass"),
+        "occupation": choices("occupation"),
+        "sex": choices("sex"),
+        "race": choices("race"),
+        "education_levels": EDUCATION_LEVELS,
+        "n_people": int(len(PEOPLE)),
+        "model": INFO,
+        "min_group_size": MIN_GROUP_SIZE,
+    }
+
+
+@app.get("/people")
+def people(
+    n: int = Query(1, ge=1, le=len(PEOPLE)),
+    seed: Optional[int] = None,
+    sex: Optional[str] = None,
+    race: Optional[str] = None,
+    workclass: Optional[str] = None,
+    occupation: Optional[str] = None,
+):
+    """Random real people of the test set, with their actual pay level. Optional filters on one value per column."""
+    pool = PEOPLE
+    for column, value in [("sex", sex), ("race", race), ("workclass", workclass), ("occupation", occupation)]:
+        if value:
+            pool = pool[pool[column] == value]
+    if pool.empty:
+        raise HTTPException(status_code=404, detail="Nobody in the test set matches these filters.")
+
+    sample = pool.sample(min(n, len(pool)), random_state=seed).reset_index()
+    return {
+        "n_matching": int(len(pool)),
+        "people": json.loads(sample.to_json(orient="records")),   # missing values become null
     }
