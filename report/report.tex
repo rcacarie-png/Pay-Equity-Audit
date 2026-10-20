@@ -14,6 +14,7 @@
 
 % figures: "figures/" on Overleaf, "../reports/figures/" when compiled inside the repository
 \graphicspath{{figures/}{../reports/figures/}}
+\emergencystretch=3em  % lets long code words wrap without going into the margin
 
 \title{Pay-Equity Audit with Supervised Learning\\[4pt]
 \large A reference pay model to detect unexplained gaps by sex and race}
@@ -91,7 +92,7 @@ capital-gain, capital-loss & kept, tested & investment income, part of the targe
 
 \paragraph{Leakage audit.} Every kept column is known at prediction time, with one caveat: the target is total income, which includes capital gains. \texttt{capital-gain} is therefore a partial target leak. We keep it, because ignoring investment income would attribute it to the employer, and we verify in Section~\ref{sec:robust} that the conclusions do not depend on it. The census has no dates and no person identifier, so there is no temporal leakage to audit and group leakage cannot be checked; the 52 duplicated rows are plausible different people with identical profiles.
 
-\paragraph{Split.} We use a stratified 60/20/20 split (\texttt{random\_state=42}): 29,304 training, 9,769 validation and 9,769 test people, each with a 23.9\% positive rate. The training set is used for fitting and cross-validation, the validation set for model choice, calibration choice and threshold, and the test set is opened once, at the end, for the final evaluation and the audit.
+\paragraph{Split.} We use a stratified 60/20/20 split (\texttt{random\_state=42}): 29,304 training, 9,769 validation and 9,769 test people, each with a 23.9\% positive rate. The training set is used for fitting and cross-validation, the validation set for model choice, calibration choice and threshold, and the test set is opened once, at the end, for the final evaluation and the audit. We keep a separate validation set, rather than only cross-validation on 80\% of the data as in the course protocol, because the calibration and the threshold must be chosen on data the model was not trained on, without touching the test set.
 
 \section{Methodology}
 
@@ -140,11 +141,11 @@ SMOTE & 0.510 & 0.757 & 0.609 & 0.854 & 0.692 & 1.0 \\
 \end{tabular}
 \end{table}
 
-We treat the class weight as fixed rather than as a hyperparameter: it did not change the ranking, and the precision/recall trade-off is controlled later by the threshold. Its side effect on the probabilities is corrected by calibration (Section~\ref{sec:calib}).
+We treat the class weight as fixed rather than as a hyperparameter: it did not change the ranking, and the precision/recall trade-off is controlled later by the threshold. Its side effect on the probabilities is corrected by calibration (Section~\ref{sec:calib}). In the end, after calibration and with the 0.5 threshold, the class weights no longer raise recall (0.50 on the test set): they never improved the ranking, and the precision/recall trade-off is set by the threshold.
 
 \subsection{Models, tuning and experiment tracking}
 
-We compare Logistic Regression (linear, interpretable), Random Forest (bagged deep trees, captures interactions) and LightGBM (gradient boosting), all with class weights and the same pipeline. Hyperparameters are tuned with Optuna (TPE sampler, seed 42): 15 trials for Logistic Regression and the Random Forest, 30 for LightGBM. Each trial is scored by 5-fold stratified cross-validation on the training set (\texttt{scoring="average\_precision"}), refitting the whole pipeline in each fold; the validation set is never used during the search, so the selection does not overfit it. Search spaces cover the complexity parameters of each model (Appendix~\ref{app:search}).
+We compare Logistic Regression (linear, interpretable: the baseline the course asks us to start with), Random Forest (bagged deep trees, captures interactions) and LightGBM (gradient boosting, the fast histogram-based implementation seen in class, preferred to scikit-learn's slower GradientBoosting), all with class weights and the same pipeline. Hyperparameters are tuned with Optuna (TPE sampler, seed 42): 15 trials for Logistic Regression and the Random Forest, 30 for LightGBM. Each trial is scored by 5-fold stratified cross-validation on the training set (\texttt{scoring="average\_precision"}), refitting the whole pipeline in each fold; the validation set is never used during the search, so the selection does not overfit it. Search spaces cover the complexity parameters of each model (Appendix~\ref{app:search}).
 
 Every run is logged in MLflow (experiment \texttt{adult-pay-equity}, SQLite backend, committed in the repository): parameters, metrics, confusion matrices and fitted pipelines for the imbalance and model comparisons; one parent run per model with one nested child run per Optuna trial (parameters, CV mean and standard deviation, the five fold scores, run time) and the optimisation history; and a final run with the test metrics, the audit tables and the calibrated model. Runs are tagged by stage (imbalance, models, tuning, tuned, final\_test).
 
@@ -179,11 +180,6 @@ LightGBM & default & $0.761 \pm 0.008$ & 0.772 & 0.890 & 0.544 & 0.804 & 0.649 \
 
 \paragraph{Reproducibility.} All numbers come from the MLflow history committed in the repository (run with \texttt{python -m src.part5\_serving}). Every random step uses \texttt{random\_state=42}; only the Random Forest varies very slightly between machines (multi-threaded trees), which changes none of the conclusions.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{part3_01.png}
-\caption{Optuna search: CV average precision of each trial, best so far, and the untuned model (dashed).}
-\end{figure}
 
 \subsection{Explainability}
 
@@ -264,7 +260,7 @@ Test and validation results are nearly identical: the choices made on validation
 
 \section{Fairness and pay-equity audit}
 
-Two questions must be kept apart: is the pay fair? (measured by the unexplained gap) and is our model fair? (it must give the same output to the same profile, whatever the person's group). All results below are on the test set.
+Two questions must be kept apart, each with its own fairness definition. Is the pay fair? Our definition is ``equal pay for equal work'' (conditional parity): people with the same job-related profile should have the same probability of earning more than \$50K, whatever their group; the unexplained gap measures how far each group is from it. Is our model fair? It must give the same output to the same profile, whatever the person's group. Demographic parity, equal opportunity and equalized odds are reported below for completeness. All results are on the test set.
 
 \subsection{Classic fairness metrics of the model}
 
@@ -305,7 +301,7 @@ Other & 82 & 12.2\% & 14.8\% & \multicolumn{2}{c}{too small to conclude} \\
 \end{tabular}
 \end{table}
 
-Women earn more than \$50K 5.4 points less often than their job-related profiles predict, and a third of the women expected to earn $>$50K do not, against 15\% of men. Black employees earn 3.4 points less than expected; for them the gap is spread over moderate probabilities rather than concentrated among the individuals the model expects to be high earners (only 14\% of them are flagged). Both gaps are significant. White employees are slightly above expectation (significant only because the group is large); the Asian-Pacific-Islander gap is not significant.
+Women earn more than \$50K 5.4 points less often than their job-related profiles predict, and a third of the women expected to earn $>$50K do not, against 15\% of men. Black employees earn 3.4 points less than expected; for them the gap is spread over moderate probabilities rather than concentrated among the individuals the model expects to be high earners (only 14\% of them are flagged). Both gaps are significant. White employees are slightly above expectation (significant only because the group is large); the Asian-Pacific-Islander gap is not significant. Since the model is calibrated on the whole population, its expected rate matches the overall actual rate (overall gap +0.4 points), so group gaps partly offset each other: the positive gap for men is largely the counterpart of the negative gap for women.
 
 \begin{figure}[H]
 \centering
@@ -315,7 +311,7 @@ Women earn more than \$50K 5.4 points less often than their job-related profiles
 
 \subsection{Mitigation: before / after}
 
-Our mitigation is a pre-processing technique: removing the protected attributes and their proxies from the model's inputs. To measure its effect, the ``before'' model uses the same tuned LightGBM, calibration and threshold, but is trained on all columns, including sex, race, national origin, marital status and relationship.
+Our mitigation is a pre-processing technique: removing the protected attributes and their proxies from the model's inputs. Removing them alone (``fairness through unawareness'') is known to be insufficient, because other inputs can partly rebuild them: the proxy check of Section~\ref{sec:robust} measures how much. To measure its effect, the ``before'' model uses the same tuned LightGBM, calibration and threshold, but is trained on all columns, including sex, race, national origin, marital status and relationship.
 
 \begin{table}[H]
 \centering
@@ -372,7 +368,7 @@ Member & Contributions \\
 \midrule
 Lélia Hervy & Wrote most of the code: exploration, feature engineering, pipeline, imbalance comparison, model comparison, tuning, calibration, SHAP, fairness and pay-equity audit, API; merged the analysis into the final notebook and scripts; maintains the repository. \\
 Thomas Pasquier-Guillard & Defined the research question (pay fairness with respect to sex and race, ``equal pay for equal work''); reviewed and modified the code. \\
-Robin Cacarié & Proposed framing the project around a real problem (the pay-equity regulator); created the GitHub repository; reviewed and modified the code. \\
+Robin Cacarié & Proposed framing the project around a real problem (the pay-equity regulator); created the GitHub repository; reviewed and modified the code; prepared the slides for the final presentation. \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -415,6 +411,12 @@ LightGBM & n\_estimators 100 to 800, learning\_rate 0.01 to 0.2 (log), num\_leav
 
 \section{Additional figures}
 \label{app:figures}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{part3_01.png}
+\caption{Optuna search (Section 4.1): CV average precision of each trial, best so far, and the untuned model (dashed).}
+\end{figure}
 
 \begin{figure}[H]
 \centering
