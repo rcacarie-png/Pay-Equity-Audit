@@ -165,7 +165,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 | Member | Main contributions |
 |---|---|
 | **Lélia Hervy** | Wrote most of the code: exploration, feature engineering, pipeline, class-imbalance comparison, model comparison, tuning, calibration, SHAP, fairness and pay-equity audit, API. Merged the analysis into the final notebook, applied the graphic identity to the figures, and maintains the repository. Concatenated the different files (from our originally shared Drive) and added them in the GitHub. Contributed to the slides for the final presentation. |
-| **Thomas Pasquier--Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. Contributed to the slides for the final presentation. |
+| **Thomas Pasquier-Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. Contributed to the slides for the final presentation. |
 | **Robin Cacarié** | Proposed framing the project around a real problem: the government pay-equity regulator. Created the GitHub repository. Reviewed and modified the code. Reworked the web interface of the API, with the help of an AI assistant, so that the model can be tried without writing JSON. Contributed to the slides for the final presentation. |
 
 All three members contributed equally to the report and the oral defense, and can explain every part of the project.
