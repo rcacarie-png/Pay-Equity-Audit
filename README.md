@@ -2,7 +2,7 @@
 
 **Course:** Supervised Learning & Model Engineering\
 **Teacher:** Ilana Sebag\
-**Team:** Thomas Pasquier-Guillard, Robin Cacarié and Lélia Hervy\
+**Team:** Thomas Pasquier--Guillard, Robin Cacarié and Lélia Hervy\
 **Dataset:** Adult / Census Income ([OpenML `adult`, version 2](https://www.openml.org/d/1590)), 48,842 people\
 **Author of Dataset:** Ronny Kohavi and Barry Becker, "Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid", Proceedings of the Second International Conference on Knowledge Discovery and Data Mining, 1996
 
@@ -57,7 +57,7 @@ The written report gives the full analysis and how we justify each choice.
 │   ├── report.tex                         # the written report (LaTeX)
 │   └── report.pdf                         # the compiled report
 ├── presentation/
-│   └── Pay-Equity Audit — Defense.pdf     # slides of the oral defense
+│   └── Pay_Equity_Audit_Defense_final.pdf # slides of the oral defense
 └── bonus notebook/
     └── Pay_Equity_Audit_Full.ipynb        # supplementary walkthrough with all plots
 ```
@@ -167,7 +167,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 | Member | Main contributions |
 |---|---|
 | **Lélia Hervy** | Wrote most of the code: exploration, feature engineering, pipeline, class-imbalance comparison, model comparison, tuning, calibration, SHAP, fairness and pay-equity audit, API. Merged the analysis into the final notebook, applied the graphic identity to the figures, and maintains the repository. Concatenated the different files (from our originally shared Drive) and added them in the GitHub. Contributed to the slides for the final presentation. |
-| **Thomas Pasquier-Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. Contributed to the slides for the final presentation. |
+| **Thomas Pasquier--Guillard** | Defined the research question: whether pay is fair with respect to sex and race, under "equal pay for equal work". Reviewed and modified the code. Contributed to the slides for the final presentation. |
 | **Robin Cacarié** | Proposed framing the project around a real problem: the government pay-equity regulator. Created the GitHub repository. Reviewed and modified the code. Reworked the web interface of the API, with the help of an AI assistant, so that the model can be tried without writing JSON. Contributed to the slides for the final presentation. |
 
 All three members contributed equally to the report and the oral defense, and can explain every part of the project.
