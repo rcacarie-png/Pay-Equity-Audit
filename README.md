@@ -56,6 +56,8 @@ The written report gives the full analysis and how we justify each choice.
 ├── report/
 │   ├── report.tex                         # the written report (LaTeX)
 │   └── report.pdf                         # the compiled report
+├── presentation/
+│   └── Pay-Equity Audit — Defense.pdf     # slides of the oral defense
 └── bonus notebook/
     └── Pay_Equity_Audit_Full.ipynb        # supplementary walkthrough with all plots
 ```
@@ -153,7 +155,7 @@ Sex and race are only used to **group** the audit results. The model drops them 
 - **Some discrimination is invisible to the audit.** Unequal access to well-paid jobs is "explained" by occupation and hidden, so the measured gaps are a lower bound.
 - **The data describes individuals, not companies,** and dates from 1994. The target is total income above \$50K, not salary. The method matters more than the size of the gaps.
 - **Small race groups** (Amer-Indian-Eskimo, Other) have too few people for conclusions.
-  We must take those limitations into account to avoid be biased in our conclusions as much as possible.
+  We must take those limitations into account to avoid being biased in our conclusions as much as possible.
 
 ## Reproducibility
 
@@ -173,7 +175,8 @@ All three members contributed equally to the report and the oral defense, and ca
 ## Use of AI assistants
 
 We used Claude (Anthropic) as a coding assistant, mainly to:
-- generate and explain code concerning the **modeling part**
+- generate and explain code concerning the **modeling part**;
 - check the results for consistency;
+- help draft the written report;
 - suggest improvements based on the course material, so that we know if we followed the proper "structure"/ "order".
 
