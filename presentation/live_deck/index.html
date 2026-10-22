@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231C5AA3'/><circle cx='32' cy='16' r='8' fill='white'/><text x='32' y='20.5' font-family='Arial,Helvetica' font-weight='700' font-size='12' text-anchor='middle' fill='%231C5AA3'>%24</text><path d='M32 24v22M13 29h38' stroke='white' stroke-width='3.5' stroke-linecap='round'/><path d='M13 29l-6 12h12zM51 29l-6 12h12z' fill='white'/><rect x='21' y='46' width='22' height='6' rx='2' fill='white'/></svg>">
+<title>Pay-Equity Audit — Live deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --navy:#1C5AA3; --violet:#7B61D9; --ink:#18202B; --grey:#6B7684; --bg:#EEF2F7; --line:#DDE3EA; }
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; background:#0E1622; overflow:hidden; font-family: Inter, -apple-system, "Helvetica Neue", Arial, sans-serif; color:#1F2733; }
+#stage { position:absolute; left:50%; top:50%; width:960px; height:540px; transform-origin: center center; }
+.slide { position:absolute; inset:0; width:960px; height:540px; background:var(--bg); overflow:hidden; opacity:0; pointer-events:none; transition: opacity .45s ease, transform .45s ease; transform: translateX(24px); }
+.slide.active { opacity:1; pointer-events:auto; transform:none; }
+.slide.prev { transform: translateX(-24px); }
+.slide.img img { width:960px; height:540px; display:block; }
+.slide.live { padding:24px 64px 0 64px; }
+.slide.live::before { content:""; position:absolute; left:0; top:0; bottom:0; width:8px; background:var(--navy); }
+/* progress header like the deck */
+.prog { display:flex; gap:4px; font-size:12.5px; color:#8C96A3; }
+.prog .sec { flex:1; }
+.prog .bars { display:flex; gap:4px; margin-top:6px; }
+.prog .bars i { flex:1; height:3px; background:#D3D9E1; display:block; }
+.prog .bars i.on { background:var(--navy); }
+.prog .act { color:var(--navy); font-weight:600; }
+h1 { font-size:27px; line-height:1.2; margin:30px 0 16px; font-weight:700; letter-spacing:-.2px; color:var(--ink); }
+.card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px 15px; }
+.lab { font-size:10.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--navy); margin-bottom:6px; }
+.sowhat { background:#DCE7F5; border-left:4px solid var(--navy); border-radius:4px; padding:8px 14px; font-size:13px; line-height:1.4; margin-top:12px; }
+.foot { position:absolute; left:64px; right:64px; bottom:34px; display:flex; justify-content:space-between; align-items:flex-end; font-size:12px; color:var(--grey); }
+.foot span:last-child { color:var(--ink); font-weight:600; }
+.small { font-size:11.5px; color:#4A5563; line-height:1.4; }
+b.v { color:var(--violet); } b.n { color:var(--navy); }
+/* step reveal */
+.step { opacity:0; transform: translateY(8px); transition: opacity .5s ease, transform .5s ease; }
+.step.shown { opacity:1; transform:none; }
+/* chart */
+.row { display:grid; grid-template-columns:86px 56px 66px 260px 122px; align-items:center; height:31px; font-size:12.5px; border-radius:4px; transition: background .2s; }
+.row.data:hover { background:#F3F6FB; }
+.row.head { height:18px; font-size:10px; color:var(--grey); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+.row .g { font-weight:600; padding-left:2px; }
+.row .num { text-align:right; padding-right:10px; color:#4A5563; }
+.plot { position:relative; height:31px; }
+.plot .zero { position:absolute; left:140px; top:0; bottom:0; width:1px; background:#8C96A3; }
+.plot .bar { position:absolute; top:10px; height:11px; border-radius:2px; width:0; transition: width 1s cubic-bezier(.2,.8,.2,1), left 1s cubic-bezier(.2,.8,.2,1); }
+.plot .ci { position:absolute; top:15px; height:1.6px; background:var(--ink); opacity:0; transition: opacity .5s ease .9s; }
+.plot .ci::before, .plot .ci::after { content:""; position:absolute; top:-4px; width:1.6px; height:9.6px; background:var(--ink); }
+.plot .ci::before { left:0; } .plot .ci::after { right:0; }
+.go .plot .ci { opacity:1; }
+.neg { background:var(--violet); } .pos { background:var(--navy); } .ns { background:#B9C2CD; }
+.gap { padding-left:10px; font-size:12px; }
+.axis { display:grid; grid-template-columns:86px 56px 66px 260px; font-size:10px; color:var(--grey); height:14px; }
+.axis .ticks { position:relative; } .axis .ticks span { position:absolute; transform:translateX(-50%); }
+/* before/after */
+table { border-collapse:collapse; width:100%; font-size:13px; }
+th { text-align:left; font-size:10.5px; color:var(--grey); text-transform:uppercase; letter-spacing:.5px; padding:6px 8px; border-bottom:1px solid var(--line); }
+td { padding:7px 8px; border-bottom:1px solid #EEF1F5; }
+td.big { font-size:19px; font-weight:800; }
+.after { background:#F2F7FD; }
+.flipcol { transition: opacity .6s ease; }
+.hide { opacity:0; }
+/* checks */
+.chk { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.chk .card { padding:11px 12px; }
+.chk .k { font-size:27px; font-weight:800; color:var(--navy); margin:2px 0; font-variant-numeric: tabular-nums; }
+.chk .t { font-size:12.5px; font-weight:700; margin-bottom:4px; line-height:1.25; }
+.chk .arrow { font-size:12px; font-weight:600; color:var(--navy); margin-top:6px; line-height:1.3; }
+/* UI chrome */
+#hud { position:fixed; left:0; right:0; bottom:0; height:4px; background:rgba(255,255,255,.08); }
+#hud i { display:block; height:100%; background:#74B9EE; width:0; transition: width .4s ease; }
+#help { position:fixed; right:14px; bottom:12px; color:#9FB0C6; font-size:12px; opacity:.0; transition:opacity .3s; font-family:Inter, sans-serif; }
+body:hover #help { opacity:.85; }
+#timer { position:fixed; left:14px; bottom:12px; font: 600 15px Inter, sans-serif; color:#fff; background:rgba(28,90,163,.92); padding:5px 11px; border-radius:6px; display:none; font-variant-numeric: tabular-nums; }
+#timer.warn { background:#B3261E; }
+#overview { position:fixed; inset:0; background:#0E1622; display:none; padding:28px; overflow:auto; z-index:5; }
+#overview .grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+#overview .th { overflow:hidden; aspect-ratio:16/9; background:#EEF2F7 center/cover no-repeat; border-radius:6px; cursor:pointer; position:relative; outline:2px solid transparent; }
+#overview .th:hover { outline-color:#74B9EE; }
+#overview .th > span { z-index:2; position:absolute; left:8px; bottom:6px; background:#18202B; color:#fff; font:600 11px Inter, sans-serif; padding:2px 6px; border-radius:4px; }
+/* recreated slides 2, 4-8 */
+.r.slide { background: #EEF2F7; padding: 24px 64px 0 64px; }
+.r.slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: #1C5AA3; }
+.r .prog { display: flex; gap: 4px; font-size: 12.5px; color: #8C96A3; }
+.r .prog .sec { flex: 1; }
+.r .prog .bars { display: flex; gap: 4px; margin-top: 6px; }
+.r .prog .bars i { flex: 1; height: 3px; background: #D3D9E1; display: block; }
+.r .prog .bars i.on { background: #1C5AA3; }
+.r .prog .act { color: #1C5AA3; font-weight: 600; }
+.r h1 { font-size: 27px; line-height: 1.2; margin: 30px 0 16px; font-weight: 700; letter-spacing: -0.2px; color: #18202B; }
+.r .card { background: #FAFBFD; border: 1px solid #DDE3EA; border-radius: 10px; padding: 16px 18px; }
+.r .lab { font-size: 11.5px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #1C5AA3; margin-bottom: 8px; }
+.r .sowhat { background: #DCE7F5; border-left: 4px solid #1C5AA3; border-radius: 4px; padding: 10px 16px; font-size: 13.6px; line-height: 1.45; color: #1F2733; }
+.r .foot { position: absolute; left: 64px; right: 64px; bottom: 34px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; color: #6B7684; line-height: 1.4; }
+.r .foot span:last-child { color: #18202B; font-weight: 600; white-space: nowrap; margin-left: 20px; }
+.r .muted { color: #6B7684; }
+.r .ct { font-size: 16px; font-weight: 600; color: #18202B; }
+.r .sm { font-size: 12.5px; color: #6B7684; line-height: 1.4; }
+/* slide 2 */
+.r .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.r .hb { display: grid; grid-template-columns: 58px 1fr; align-items: center; row-gap: 10px; margin-top: 12px; font-size: 13.5px; }
+.r .hb .b { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+.r .hb .b i { display: block; height: 20px; border-radius: 2px; }
+/* slide 4 */
+.r .bigl div { font-size: 15.5px; font-weight: 600; color: #18202B; line-height: 1.45; }
+.r .strike div { font-size: 14.5px; font-weight: 600; color: #6B7684; text-decoration: line-through; line-height: 1.55; }
+.r .feat p { margin: 0 0 8px; font-size: 12.6px; line-height: 1.36; color: #1F2733; }
+/* slide 5 */
+.r .flow { display: grid; grid-template-columns: 1fr 48px 1fr 48px 1fr; align-items: stretch; }
+.r .flow .card { padding: 14px 16px; }
+.r .flow .ar { display: flex; align-items: center; justify-content: center; }
+.r .eqcard { margin-top: 18px; padding: 14px; text-align: center; font-size: 22px; font-weight: 700; color: #18202B; }
+.r .eqcard .fe { font-size: 14px; font-weight: 500; color: #4A5563; margin-right: 12px; }
+.r .cond { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
+.r .cond div { border-top: 2px solid #1C5AA3; padding-top: 10px; }
+.r .cond b { display: block; font-size: 14px; color: #18202B; margin-bottom: 5px; }
+/* slide 6 */
+.r .mods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 8px; }
+.r .mods .k { font-size: 44px; font-weight: 700; line-height: 1.05; margin: 2px 0 8px; letter-spacing: -0.5px; }
+/* slide 7 */
+.r .shap { display: grid; grid-template-columns: 158px 1fr; align-items: center; row-gap: 9px; font-size: 13.5px; margin-top: 8px; }
+.r .shap .b { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1C5AA3; font-size: 13.5px; }
+.r .shap .b i { display: block; height: 16px; background: #1C5AA3; border-radius: 1px; }
+/* slide 8 */
+.r .cal { display: grid; grid-template-columns: 108px 1fr; align-items: center; row-gap: 12px; font-size: 13.5px; margin: 12px 0 10px; }
+.r .cal .b { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+.r .cal .b i { display: block; height: 18px; border-radius: 1px; }
+
+/* title and closing slides */
+.t.slide { background: #EEF2F7; padding: 24px 64px 0 64px; }
+.t.slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 24px; background: #1C5AA3; }
+.t .prog { display: flex; gap: 4px; font-size: 12.5px; color: #8C96A3; }
+.t .prog .sec { flex: 1; } .t .prog .bars { display: flex; gap: 4px; margin-top: 6px; }
+.t .prog .bars i { flex: 1; height: 3px; background: #D3D9E1; display: block; } .t .prog .bars i.on { background: #1C5AA3; }
+.t .prog .act { color: #1C5AA3; font-weight: 600; }
+.t .hero { display: flex; align-items: flex-start; gap: 20px; margin-top: 22px; }
+.t .logo { width: 178px; height: 216px; flex: none; margin-top: 3px; margin-left: -4px; }
+.t .ttl { font-size: 62px; line-height: 1.12; font-weight: 700; color: #1C5AA3; letter-spacing: -0.6px; }
+.t .tsub { margin-top: 44px; font-size: 22px; font-weight: 700; color: #173F73; }
+.t .tnames { margin-top: 44px; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(24,32,43,.12); padding: 14px 24px 16px; }
+.t .tnames .who { font-size: 15.5px; font-weight: 600; color: #18202B; }
+.t .tnames .who span, .t .tnames .what span { margin: 0 5px; }
+.t .tnames .what { font-size: 12.5px; color: #6B7684; margin-top: 6px; }
+.t .foot { position: absolute; left: 64px; right: 64px; bottom: 34px; display: flex; justify-content: space-between; font-size: 12px; }
+.t .foot span:last-child { color: #18202B; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <section class="t slide">
+  <div class="prog">
+    <div class="sec act">Problem<div class="bars"><i class="on"></i><i></i><i></i></div></div>
+    <div class="sec">Model<div class="bars"><i></i><i></i><i></i></div></div>
+    <div class="sec">Audit<div class="bars"><i></i><i></i><i></i></div></div>
+    </div>
+  <div class="hero"><svg class="logo" viewBox="0 0 178 216" aria-hidden="true">
+      <circle cx="89" cy="41" r="40" fill="#173F73"/>
+      <text x="89" y="57" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="46" fill="#fff">$</text>
+      <rect x="83" y="78" width="12" height="108" fill="#173F73"/>
+      <rect x="12" y="78" width="154" height="9" rx="2" fill="#173F73"/>
+      <path d="M33 86 L9 124 M33 86 L57 124 M145 86 L121 124 M145 86 L169 124" stroke="#173F73" stroke-width="5" fill="none"/>
+      <path d="M3 123 h60 a30 30 0 0 1 -60 0z M115 123 h60 a30 30 0 0 1 -60 0z" fill="#173F73"/>
+      <rect x="22" y="182" width="134" height="33" fill="#173F73"/>
+    </svg><div class="ttl">Pay-Equity Audit<br>with Supervised<br>Learning</div></div>
+  <div class="tsub">Our role: a pay-equity regulator</div>
+  <div class="tnames"><div class="who">Lélia Hervy <span>·</span> Thomas Pasquier--Guillard <span>·</span> Robin Cacarié</div>
+    <div class="what">Supervised Learning &amp; Model Engineering <span>·</span> Ilana Sebag <span>·</span> Albert School <span>·</span> October 2026</div></div>
+  <div class="foot"><span></span><span>01 / 10</span></div>
+</section>
+
+  <section class="slide r">
+  <div class="prog">
+    <div class="sec act">Problem<div class="bars"><i class="on"></i><i class="on"></i><i></i></div></div>
+    <div class="sec">Model<div class="bars"><i></i><i></i><i></i></div></div>
+    <div class="sec">Audit<div class="bars"><i></i><i></i><i></i></div></div>
+    </div>
+  <h1 style="margin-bottom:12px">Our role: a pay-equity regulator</h1>
+  <div style="font-size:16px; color:#4A5563; margin-bottom:18px"><b style="color:#18202B; font-weight:600">Business question:</b> which employers should we investigate, and on what evidence?</div>
+  <div class="three">
+    <div class="card"><div class="ct">All workers</div><div class="sm" style="margin-top:6px">Share earning more than $50K</div>
+      <div class="hb"><span>Men</span><span class="b"><i style="width:64px;background:#74B9EE"></i>30%</span><span>Women</span><span class="b" style="color:#1C5AA3"><i style="width:24px;background:#1C5AA3"></i>11%</span></div></div>
+    <div class="card"><div class="ct">Same degree: Bachelors</div><div class="sm" style="margin-top:6px">Share earning more than $50K</div>
+      <div class="hb"><span>Men</span><span class="b"><i style="width:108px;background:#74B9EE"></i>50%</span><span>Women</span><span class="b" style="color:#1C5AA3"><i style="width:45px;background:#1C5AA3"></i>21%</span></div></div>
+    <div class="card"><div class="ct">Same job: managers</div><div class="sm" style="margin-top:6px">Share earning more than $50K</div>
+      <div class="hb"><span>Men</span><span class="b"><i style="width:122px;background:#74B9EE"></i>57%</span><span>Women</span><span class="b" style="color:#1C5AA3"><i style="width:52px;background:#1C5AA3"></i>24%</span></div></div>
+  </div>
+  <div class="sowhat" style="margin-top:18px"><b>So what?</b> The gap does not disappear when we compare people with the same degree or the same job. Raw gaps are not enough: under “equal pay for equal work”, we must compare each person with what their job-related profile predicts.</div>
+  <div class="foot"><span>Adult census data, full dataset (48,842 people). Men: light blue · Women: navy.</span><span>02 / 10</span></div>
+</section>
+
+  <section class="slide r">
+  <div class="prog">
+    <div class="sec act">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec">Model<div class="bars"><i></i><i></i><i></i></div></div>
+    <div class="sec">Audit<div class="bars"><i></i><i></i><i></i></div></div>
+    </div>
+  <h1>What the model may use</h1>
+  <div class="three" style="height:246px; grid-template-columns: 0.82fr 0.82fr 1.36fr">
+    <div class="card"><div class="lab">Used · job-related factors</div>
+      <div class="bigl"><div>Age</div><div>Education (years)</div><div>Occupation</div><div>Hours per week</div><div>Workclass</div><div>Investment income</div></div></div>
+    <div class="card"><div class="lab" style="color:#6E56CF">Excluded · protected<br>or proxies</div>
+      <div class="strike"><div>Sex</div><div>Race</div><div>Native country</div><div>Relationship</div><div>Marital status</div></div>
+      <div style="border-left:2px solid #6E56CF; padding:2px 0 2px 9px; margin-top:8px; font-size:12.5px; font-weight:600; color:#6E56CF; line-height:1.35">“Husband” = 99.99% men:<br>relationship encodes sex.</div></div>
+    <div class="card feat" style="padding:14px 16px"><div class="lab" style="color:#00785F">Added · 5 new features</div>
+      <p><b>Works overtime</b> (&gt; 40 h): 39.7% earn &gt; $50K vs 17.2%. 36% of men work overtime vs 17% of women.</p>
+      <p><b>Part-time</b> (less than 35 h a week): 7.2% earn over $50K, against 27.4%. 27.6% of women work part-time, against 11.9% of men.</p>
+      <p><b>Has investments</b> (any capital gain or loss): 57.5% earn over $50K, against 18.9%. The other two features, net capital (gain − loss) and log capital gain, describe the same income.</p></div>
+  </div>
+  <div class="sowhat" style="margin-top:16px"><b>So what?</b> The exclusions happen inside the pipeline, so sex and race can never reach the model, even in production. Part-time work is a legitimate reason to earn less, and the model now accounts for it.</div>
+  <div class="foot"><span>Also dropped: fnlwgt (census sampling weight) and education (exact duplicate of education years).</span><span>03 / 10</span></div>
+</section>
+
+  <section class="slide r">
+  <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Model<div class="bars"><i class="on"></i><i></i><i></i></div></div>
+    <div class="sec">Audit<div class="bars"><i></i><i></i><i></i></div></div>
+    </div>
+  <h1>How the model works</h1>
+  <div class="flow">
+    <div class="card" style="background:#fff"><div class="ct">Employee profile</div><div class="sm" style="margin-top:6px">age, education, occupation, hours, workclass, investments</div></div>
+    <div class="ar"><svg width="30" height="16" viewBox="0 0 30 16"><path d="M0 8h20" stroke="#1C5AA3" stroke-width="4"/><path d="M18 1l11 7-11 7z" fill="#1C5AA3"/></svg></div>
+    <div class="card" style="background:#1C5AA3; border-color:#1C5AA3"><div class="ct" style="color:#fff">Reference pay model</div><div class="sm" style="margin-top:6px; color:#DCE7F5">trained on the population, never sees sex or race</div></div>
+    <div class="ar"><svg width="30" height="16" viewBox="0 0 30 16"><path d="M0 8h20" stroke="#1C5AA3" stroke-width="4"/><path d="M18 1l11 7-11 7z" fill="#1C5AA3"/></svg></div>
+    <div class="card" style="background:#fff"><div class="ct">Expected probability</div><div class="sm" style="margin-top:6px">of earning more than $50K for this profile</div></div>
+  </div>
+  <div class="card eqcard" style="background:#fff"><span class="fe">For each group:</span> actual rate &nbsp;&nbsp;−&nbsp;&nbsp; expected rate &nbsp;&nbsp;=&nbsp;&nbsp; <span style="color:#1C5AA3">unexplained gap</span></div>
+  <div class="cond">
+    <div><b>1 · No protected attributes</b><span class="sm">otherwise the model learns the discrimination and hides it</span></div>
+    <div><b>2 · Good ranking</b><span class="sm">the expected rate must follow real differences in qualifications</span></div>
+    <div><b>3 · Calibrated probabilities</b><span class="sm">the expected rate is an average of probabilities, so they must be right</span></div>
+  </div>
+  <div class="foot"><span>A negative gap means the group earns less than its qualifications predict: a reason to investigate, not a verdict.</span><span>04 / 10</span></div>
+</section>
+
+  <section class="slide r">
+  <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Model<div class="bars"><i class="on"></i><i class="on"></i><i></i></div></div>
+    <div class="sec">Audit<div class="bars"><i></i><i></i><i></i></div></div>
+    </div>
+  <h1>Three models, one winner</h1>
+  <div class="card" style="padding:14px 20px 16px">
+    <div class="sm" style="font-size:12.5px">Average precision on the validation set, after tuning (main metric: focuses on the rare &gt; $50K class; random = 0.24)</div>
+    <div class="mods">
+      <div><div class="ct">Logistic Regression</div><div class="k" style="color:#5F6B7A">0.692</div><div class="sm">Simple and transparent, but one linear score misses interactions.</div></div>
+      <div><div class="ct">Random Forest</div><div class="k" style="color:#00785F">0.752</div><div class="sm">Biggest jump: the value of a degree depends on the job and on age.</div></div>
+      <div><div class="ct">LightGBM · selected</div><div class="k" style="color:#1C5AA3">0.776</div><div class="sm">Best ranking and recall, trains in about 1 second.</div></div>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px">
+    <div class="card"><div class="ct" style="font-size:14.5px">Imbalance: class weights</div><div class="sm" style="margin-top:5px">Same gain as undersampling or SMOTE, but keeps every real person and creates no synthetic ones.</div></div>
+    <div class="card"><div class="ct" style="font-size:14.5px">Tuning: Optuna + 5-fold CV</div><div class="sm" style="margin-top:5px">Only +0.005 AP: the choice of model family mattered far more than its settings.</div></div>
+  </div>
+  <div class="foot"><span>One scikit-learn Pipeline: drop excluded columns, add 5 features, impute, scale, one-hot, model · every run logged<br>in MLflow</span><span>05 / 10</span></div>
+</section>
+
+  <section class="slide r">
+  <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Model<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec">Audit<div class="bars"><i></i><i></i><i></i></div></div>
+    </div>
+  <h1>What drives the predictions</h1>
+  <div style="display:grid; grid-template-columns:482px 1fr; gap:16px; height:190px">
+    <div class="card"><div class="sm">Mean |SHAP value|: average impact on a prediction</div>
+      <div class="shap">
+        <span>Age</span><span class="b"><i style="width:240px"></i>1.09</span>
+        <span>Education (years)</span><span class="b"><i style="width:104px"></i>0.47</span>
+        <span>Capital gain</span><span class="b"><i style="width:64px"></i>0.29</span>
+        <span>Hours per week</span><span class="b"><i style="width:44px"></i>0.20</span>
+        <span>Service occupation</span><span class="b"><i style="width:40px"></i>0.18</span>
+      </div></div>
+    <div class="card"><div class="lab" style="color:#6E56CF">One prediction explained</div>
+      <div style="font-size:13.5px; line-height:1.38">Age 50, professional degree, self-employed. Predicted <b>91%</b> chance of earning more than $50K, but earns less.</div>
+      <div class="sm" style="font-size:13px; margin-top:7px">It looks like underpayment, yet there is no employer to blame.</div>
+      <div style="font-size:13px; font-weight:600; color:#1C5AA3; margin-top:9px">→ Flags are leads for inspectors, not verdicts.</div></div>
+  </div>
+  <div class="sowhat" style="margin-top:18px"><b>So what?</b> The model prices a profile the way a pay grid would: experience, qualification, investment income, working time and job. These are factors an employer cannot dispute.</div>
+  <div class="foot"><span>SHAP (TreeExplainer) on 2,000 validation people. SHAP describes what the model uses, not what causes income.</span><span>06 / 10</span></div>
+</section>
+
+  <section class="slide live" id="s9">
+  <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec">Model<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Audit<div class="bars"><i class="on"></i><i></i><i></i></div></div>
+    </div>
+  <h1>Two groups earn less than their profile predicts</h1>
+  <div style="display:grid; grid-template-columns: 620px 1fr; gap: 12px;">
+    <div class="card" id="chart">
+      <div class="lab">Actual vs expected share earning &gt; $50K · gap in points, 95% CI · grey = not significant</div>
+      <div class="row head"><div>Group</div><div class="num">Actual</div><div class="num">Expected</div><div style="text-align:center">Unexplained gap</div><div class="gap">Gap [95% CI]</div></div>
+      <!-- scale: 20 px per point, zero at 140 px -->
+      <div class="row"><div class="g">Women</div><div class="num">11.1%</div><div class="num">16.5%</div>
+        <div class="plot"><div class="zero"></div><div class="bar neg" data-v="-5.4"></div><div class="ci" style="left:14px;width:34px"></div></div>
+        <div class="gap"><b class="v" data-count="-5.4">−5.4</b> [−6.3, −4.6]</div></div>
+      <div class="row"><div class="g">Black</div><div class="num">13.3%</div><div class="num">16.7%</div>
+        <div class="plot"><div class="zero"></div><div class="bar neg" data-v="-3.4"></div><div class="ci" style="left:42px;width:60px"></div></div>
+        <div class="gap"><b class="v" data-count="-3.4">−3.4</b> [−4.9, −1.9]</div></div>
+      <div class="row"><div class="g" style="color:#6B7684">Asian-Pac.</div><div class="num">26.4%</div><div class="num">25.4%</div>
+        <div class="plot"><div class="zero"></div><div class="bar ns" data-v="1.0"></div><div class="ci" style="left:82px;width:158px"></div></div>
+        <div class="gap" style="color:#6B7684">+1.0 [−2.9, +5.0]</div></div>
+      <div class="row"><div class="g">White</div><div class="num">25.3%</div><div class="num">24.4%</div>
+        <div class="plot"><div class="zero"></div><div class="bar pos" data-v="0.9"></div><div class="ci" style="left:144px;width:28px"></div></div>
+        <div class="gap">+0.9 [+0.2, +1.6]</div></div>
+      <div class="row"><div class="g">Men</div><div class="num">30.4%</div><div class="num">27.1%</div>
+        <div class="plot"><div class="zero"></div><div class="bar pos" data-v="3.3"></div><div class="ci" style="left:188px;width:36px"></div></div>
+        <div class="gap"><b class="n" data-count="3.3">+3.3</b> [+2.4, +4.2]</div></div>
+      <div class="axis"><div></div><div></div><div></div><div class="ticks">
+        <span style="left:20px">−6</span><span style="left:80px">−3</span><span style="left:140px">0</span><span style="left:200px">+3</span><span style="left:260px">+6</span></div></div>
+    </div>
+    <div class="card small" style="font-size:12px">
+      <div class="lab">What it means</div>
+      <p style="margin:0 0 6px"><b>Women:</b> about <b>176 of 3,259</b> “missing” above $50K. 1 in 3 whose profile predicts &gt; $50K does not get it (men: 1 in 7).</p>
+      <p style="margin:0 0 6px"><b>Black employees:</b> gap spread over moderate profiles, visible for the group, rarely in individual flags.</p>
+      <p style="margin:0"><b>Men +3.3:</b> the mirror image, since the reference is the population average.</p>
+    </div>
+  </div>
+  <div class="sowhat"><b>So what?</b> Two gaps whose 95% range stays clearly below zero: grounds to open investigations. Unexplained is not proven: the employer gets the chance to justify the gap.</div>
+  <div class="foot"><span>Untouched test set (9,769 people) · 1,000 bootstrap resamples · groups under 100 people not interpreted</span><span>07 / 10</span></div>
+</section>
+
+  <section class="slide live" id="s10">
+    <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec">Model<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Audit<div class="bars"><i class="on"></i><i class="on"></i><i></i></div></div>
+    </div>
+    <h1>Hiding sex from the model is what reveals the gap</h1>
+    <div class="card" style="padding:6px 12px 4px">
+      <table>
+        <tr><th style="width:38%">Same tuned LightGBM, calibration and threshold</th><th>Before: all columns<br><span style="text-transform:none;font-weight:400">incl. sex, race, relationship, marital status</span></th><th class="after" style="color:#1C5AA3"><span class="flipcol">After: job-related only (ours)<br><span style="text-transform:none;font-weight:400">pre-processing mitigation</span></span></th></tr>
+        <tr><td>ROC-AUC (performance)</td><td class="big" style="color:#6B7684">0.930</td><td class="big after"><span class="flipcol">0.893</span></td></tr>
+        <tr><td>Demographic parity difference, sex</td><td>0.187</td><td class="after"><b class="flipcol">0.103</b></td></tr>
+        <tr><td>Equalized odds difference, sex</td><td>0.114</td><td class="after"><b class="flipcol">0.042</b></td></tr>
+        <tr><td><b>Unexplained gap, women</b></td><td class="big" style="color:#6B7684">+0.2</td><td class="big after" style="color:#7B61D9"><span class="flipcol" data-count="-5.4">−5.4</span></td></tr>
+        <tr><td><b>Unexplained gap, Black employees</b></td><td class="big" style="color:#6B7684">+1.1</td><td class="big after" style="color:#7B61D9"><span class="flipcol" data-count="-3.4">−3.4</span></td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="sowhat"><b>So what?</b> The full model is more accurate <i>because</i> it has learned the discrimination, so every employer would look fair. Our fairness definition is <b>equal pay for equal work</b>, measured by the unexplained gap; the classic metrics improve too.</div>
+      <p class="small" style="margin:9px 0 0"><b>Rejected: post-processing (ThresholdOptimizer).</b> Group-specific thresholds would erase the very signal we measure, and need sex and race at prediction time.</p>
+    </div>
+    <div class="foot"><span>Untouched test set · only the input columns differ between the two models</span><span>08 / 10</span></div>
+  </section>
+
+  <section class="slide live" id="s12">
+    <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec">Model<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Audit<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    </div>
+    <h1>From model to tool: screening, not sentencing</h1>
+    <div style="display:grid; grid-template-columns:455px 1fr; gap:12px;">
+      <div class="card" style="padding:10px">
+        <div class="lab">FastAPI service + web interface · POST /audit</div>
+        <img src="img/webapp.jpg" alt="Web interface of the audit API" style="width:100%; height:236px; object-fit:cover; object-position:bottom; border:1px solid #DDE3EA; border-radius:4px; display:block">
+        <div class="small" style="margin-top:6px">An inspector sends a company's records and gets the gap per group, its 95% range and the flagged employees. Here, one simulated company of 2,000 test-set employees: women −4.8 [−6.6, −2.9].</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div class="card" style="background:#1C5AA3; color:#fff; border:none">
+          <div class="lab" style="color:#C9DAF8">Recommendation</div>
+          <div style="font-size:14px; font-weight:700; line-height:1.38">Screen every company's records. Open an investigation when a group's gap is significantly negative; use the flags to choose which files to review.</div>
+        </div>
+        <div class="card small">
+          <div class="lab" style="color:#5F6B7A">Limits</div>
+          Unexplained is not proven: seniority, region and performance are not in the data.<br>
+          1994 census of individuals, not companies; total income above $50K, not salary.<br>
+          Calibration checked overall, not yet group by group.
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>Code, report and slides: github.com/rcacarie-png/Adult-Income-Prediction</span><span>09 / 10</span></div>
+  </section>
+
+  <section class="t slide">
+  <div class="prog">
+    <div class="sec">Problem<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec">Model<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div class="sec act">Audit<div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    </div>
+  <div class="hero"><svg class="logo" viewBox="0 0 178 216" aria-hidden="true">
+      <circle cx="89" cy="41" r="40" fill="#173F73"/>
+      <text x="89" y="57" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="46" fill="#fff">$</text>
+      <rect x="83" y="78" width="12" height="108" fill="#173F73"/>
+      <rect x="12" y="78" width="154" height="9" rx="2" fill="#173F73"/>
+      <path d="M33 86 L9 124 M33 86 L57 124 M145 86 L121 124 M145 86 L169 124" stroke="#173F73" stroke-width="5" fill="none"/>
+      <path d="M3 123 h60 a30 30 0 0 1 -60 0z M115 123 h60 a30 30 0 0 1 -60 0z" fill="#173F73"/>
+      <rect x="22" y="182" width="134" height="33" fill="#173F73"/>
+    </svg><div class="ttl">Pay-Equity Audit<br>with Supervised<br>Learning</div></div>
+  <div class="tsub">Thank you for listening</div>
+  <div class="tnames"><div class="who">Lélia Hervy <span>·</span> Thomas Pasquier--Guillard <span>·</span> Robin Cacarié</div>
+    <div class="what">Supervised Learning &amp; Model Engineering <span>·</span> Ilana Sebag <span>·</span> Albert School <span>·</span> October 2026</div></div>
+  <div class="foot"><span></span><span>10 / 10</span></div>
+</section>
+</div>
+
+<div id="hud"><i></i></div>
+<div id="timer">7:00</div>
+<div id="help">→ / space: next · ←: back · F: full screen · T: 7-min timer · O: overview</div>
+<div id="overview"><div class="grid"></div></div>
+
+<script>
+(function () {
+  const stage = document.getElementById('stage');
+  const slides = [...document.querySelectorAll('.slide')];
+  let cur = 0, step = 0;
+
+  function fit() {
+    const s = Math.min(window.innerWidth / 960, window.innerHeight / 540);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  window.addEventListener('resize', fit); fit();
+
+  const stepsOf = el => parseInt(el.dataset.steps || '0', 10);
+
+  function countUp(el) {
+    const target = parseFloat(el.dataset.count);
+    const dec = el.dataset.dec ? parseInt(el.dataset.dec, 10) : 1;
+    const t0 = performance.now(), dur = 900;
+    const fmt = v => (v < 0 ? '−' : (el.closest('.gap') && target > 0 ? '+' : '')) + Math.abs(v).toFixed(dec);
+    (function tick(t) {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = fmt(target * e);
+      if (k < 1) requestAnimationFrame(tick);
+    })(t0);
+    setTimeout(() => { el.textContent = fmt(target); }, dur + 150);   // final value, even if frames were skipped
+  }
+
+  function animateChart(slide, on) {
+    slide.querySelectorAll('.bar').forEach((b, i) => {
+      const v = parseFloat(b.dataset.v), w = Math.abs(v) * 20;
+      b.style.transitionDelay = on ? (i * 0.12) + 's' : '0s';
+      b.style.left = (on && v < 0 ? 140 - w : 140) + 'px';
+      b.style.width = on ? w + 'px' : '0px';
+    });
+    slide.querySelector('#chart').classList.toggle('go', on);
+    if (on) slide.querySelectorAll('#chart [data-count]').forEach(countUp);
+  }
+
+  function render() {
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === cur);
+      s.classList.toggle('prev', i < cur);
+    });
+    const s = slides[cur];
+    s.querySelectorAll('[data-step]').forEach(el => {
+      const shown = step >= parseInt(el.dataset.step, 10);
+      const was = el.classList.contains('shown') || (el.classList.contains('flipcol') && !el.classList.contains('hide'));
+      if (el.classList.contains('flipcol')) el.classList.toggle('hide', !shown);
+      else el.classList.toggle('shown', shown);
+      if (shown && !was) {
+        if (el.dataset.count) countUp(el);
+        el.querySelectorAll('[data-count]').forEach(countUp);
+      }
+    });
+    if (s.id === 's9') {                     // replay the chart each time the slide opens
+      animateChart(s, false);
+      requestAnimationFrame(() => requestAnimationFrame(() => animateChart(s, true)));
+    }
+    document.querySelector('#hud i').style.width = ((cur + 1) / slides.length * 100) + '%';
+    try { history.replaceState(null, '', '#' + (cur + 1) + (stepsOf(slides[cur]) ? '.' + step : '')); } catch (e) {}
+  }
+
+  function enter(i, atEnd) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    const n = stepsOf(slides[cur]);
+    step = atEnd ? n : (n ? 1 : 0);
+    render();
+  }
+  function next() { const n = stepsOf(slides[cur]); if (step < n) { step++; render(); } else if (cur < slides.length - 1) enter(cur + 1); }
+  function prev() { if (step > 1) { step--; render(); } else if (cur > 0) enter(cur - 1, true); }
+
+  // timer: 7 minutes for the whole group
+  const timer = document.getElementById('timer'); let t0 = null, iv = null;
+  function toggleTimer() {
+    if (iv) { clearInterval(iv); iv = null; timer.style.display = 'none'; return; }
+    t0 = Date.now(); timer.style.display = 'block';
+    iv = setInterval(() => {
+      const left = 420 - Math.floor((Date.now() - t0) / 1000), a = Math.abs(left);
+      timer.textContent = (left < 0 ? '−' : '') + Math.floor(a / 60) + ':' + String(a % 60).padStart(2, '0');
+      timer.classList.toggle('warn', left <= 60);
+    }, 250);
+  }
+
+  // overview
+  const ov = document.getElementById('overview'), grid = ov.querySelector('.grid');
+  slides.forEach((s, i) => {
+    const d = document.createElement('div'); d.className = 'th';
+    // a real miniature: a copy of the slide, fully revealed, scaled down to the thumbnail
+    const mini = s.cloneNode(true);
+    mini.removeAttribute('id');
+    mini.classList.add('active'); mini.classList.remove('prev');
+    mini.style.cssText = 'position:absolute;left:0;top:0;opacity:1;transform:none;transition:none;pointer-events:none';
+    mini.querySelectorAll('.step').forEach(e => e.classList.add('shown'));
+    mini.querySelectorAll('.flipcol').forEach(e => e.classList.remove('hide'));
+    mini.querySelectorAll('.bar[data-v]').forEach(b => { const v = parseFloat(b.dataset.v), w = Math.abs(v) * 20; b.style.transition = 'none'; b.style.width = w + 'px'; b.style.left = (v < 0 ? 140 - w : 140) + 'px'; });
+    mini.querySelectorAll('#chart, .card').forEach(c => c.classList.add('go'));
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0';
+    holder.appendChild(mini); d.appendChild(holder);
+    d.insertAdjacentHTML('beforeend', `<span>${String(i + 1).padStart(2, '0')}</span>`);
+    d.onclick = () => { ov.style.display = 'none'; enter(i, true); };
+    grid.appendChild(d);
+  });
+  const scaleThumbs = () => grid.querySelectorAll('.th > div').forEach(h => { h.style.transform = `scale(${h.parentElement.clientWidth / 960})`; });
+  window.addEventListener('resize', scaleThumbs);
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') enter(0);
+    else if (e.key === 'End') enter(slides.length - 1, true);
+    else if (e.key.toLowerCase() === 'f') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (e.key.toLowerCase() === 't') toggleTimer();
+    else if (e.key.toLowerCase() === 'o') { ov.style.display = ov.style.display === 'block' ? 'none' : 'block'; scaleThumbs(); }
+    else if (e.key === 'Escape') ov.style.display = 'none';
+  });
+  document.addEventListener('click', e => { if (ov.style.display === 'block') return; if (e.clientX > window.innerWidth / 3) next(); else prev(); });
+
+  // #9 opens slide 9; #9.2 opens slide 9 at step 2
+  const [h, hs] = (location.hash || '#1').slice(1).split('.');
+  const start = parseInt(h, 10) - 1;
+  enter(isNaN(start) ? 0 : start);
+  if (hs) { step = Math.min(stepsOf(slides[cur]), parseInt(hs, 10)); render(); }
+})();
+</script>
+</body>
+</html>

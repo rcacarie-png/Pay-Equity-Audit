@@ -57,7 +57,8 @@ The written report gives the full analysis and how we justify each choice.
 │   ├── report.tex                         # the written report (LaTeX)
 │   └── report.pdf                         # the compiled report
 ├── presentation/
-│   └── Pay_Equity_Audit_Defense_final.pdf # slides of the oral defense
+│   ├── Pay_Equity_Audit_Defense_final.pdf # slides of the oral defense
+│   └── live_deck/index.html               # the same slides in HTML, with an animated gap chart (open in a browser)
 └── bonus notebook/
     └── Pay_Equity_Audit_Full.ipynb        # supplementary walkthrough with all plots
 ```
