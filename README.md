@@ -115,6 +115,7 @@ uvicorn audit_api:app --reload
 Open http://127.0.0.1:8000 for the **web interface**:
 - **One person**: a form with a dropdown list for each category, or a real person loaded from the test set. The expected probability of earning >50K updates as you edit, and for a real person it is compared with the actual pay.
 - **Audit a population**: draws real employees from the test set (optionally of one occupation or workclass), runs the audit and shows, for each sex and race group, the unexplained gap with its 95% CI and the list of potentially underpaid employees. Click an employee to open them in the one-person form.
+- **Upload a company**: an inspector uploads a company's employee records as a CSV file (comma or semicolon separated) and gets the same audit. The page checks every row before sending it, lists the rows it cannot audit and the categories the model never saw, and offers a sample file of 500 test-set employees. The expected columns are described on the page.
 
 Open http://127.0.0.1:8000/docs to try the endpoints directly:
 

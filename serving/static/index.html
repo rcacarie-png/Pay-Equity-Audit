@@ -187,6 +187,32 @@
   }
   .tooltip.show { opacity: 1; }
 
+  /* ---------- upload a company ---------- */
+  .drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+    border: 2px dashed var(--silver); border-radius: var(--radius); padding: 28px 16px; background: var(--bg);
+    cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--navy); background: var(--navy-soft); }
+  .drop .big { font-size: 15px; font-weight: 700; }
+  .drop .small-text { font-size: 12.5px; color: var(--muted); }
+  .drop.loaded { border-style: solid; border-color: var(--navy); background: var(--card); }
+  .upload-bar { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; margin-top: 16px; }
+  .upload-bar .checks { display: flex; gap: 12px; height: 36px; align-items: center; }
+  .upload-bar .checks label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; cursor: pointer; }
+  .upload-bar .checks label.off { color: var(--silver); cursor: not-allowed; }
+  .upload-bar .run { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .issues { margin-top: 14px; font-size: 13px; border-radius: 8px; padding: 10px 14px; }
+  .issues:empty { display: none; }
+  .issues.bad { background: #FDECEA; color: var(--bad); }
+  .issues.warn { background: var(--warn-soft); color: var(--warn); }
+  .issues ul { margin: 6px 0 0; padding-left: 18px; }
+  details.guide { margin-top: 14px; font-size: 13px; color: var(--steel); }
+  details.guide summary { cursor: pointer; font-weight: 600; color: var(--navy); }
+  details.guide table { border-collapse: collapse; margin-top: 8px; width: 100%; max-width: 760px; }
+  details.guide td, details.guide th { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  details.guide code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
   @media (max-width: 860px) {
     .simulator { grid-template-columns: 1fr; }
     .result { position: static; }
@@ -215,6 +241,7 @@
     <nav role="tablist">
       <button role="tab" aria-selected="true" data-view="person">One person</button>
       <button role="tab" aria-selected="false" data-view="audit">Audit a population</button>
+      <button role="tab" aria-selected="false" data-view="upload">Upload a company</button>
     </nav>
   </div>
 </header>
@@ -366,6 +393,81 @@
         </div>
         <div class="more" id="people-more"></div>
         <p class="note">Potentially underpaid (orange mark): the model expects more than $50K but the person earns $50K or less. Click a row to open the person in the simulator.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ UPLOAD A COMPANY ============ -->
+  <section class="view" id="view-upload" hidden>
+    <p class="intro">Upload a company's employee records (CSV) and run the same audit: for each group, the share who actually earn more than $50K against the share the model expects from their job profile, and the employees to review first.</p>
+
+    <div class="card">
+      <label class="drop" id="up-drop" for="up-file">
+        <span class="big" id="up-drop-title">Drop a CSV file here, or click to choose one</span>
+        <span class="small-text" id="up-drop-sub">One row per employee · comma or semicolon separated · nothing leaves your computer except the request to the audit API</span>
+      </label>
+      <input type="file" id="up-file" accept=".csv,text/csv" hidden>
+
+      <div class="upload-bar">
+        <button type="button" class="btn" id="up-sample">Download a sample company (500 employees)</button>
+        <div class="field">
+          <label>Group by</label>
+          <div class="checks">
+            <label id="up-lab-sex"><input type="checkbox" name="up_group_by" value="sex" checked> Sex</label>
+            <label id="up-lab-race"><input type="checkbox" name="up_group_by" value="race" checked> Race</label>
+          </div>
+        </div>
+        <div class="run">
+          <button class="btn primary" id="up-run" disabled>Run the audit</button>
+        </div>
+      </div>
+
+      <div class="issues" id="up-issues"></div>
+      <div class="status-line" id="up-status"></div>
+      <div class="api-error" id="up-error"></div>
+
+      <details class="guide">
+        <summary>Expected columns</summary>
+        <table>
+          <tr><th>Column</th><th>Required</th><th>Content</th></tr>
+          <tr><td><code>age</code></td><td>yes</td><td>16 to 100</td></tr>
+          <tr><td><code>education-num</code></td><td>yes*</td><td>1 to 16 (13 = Bachelors). *Or a column <code>education</code> with the label, e.g. <code>Bachelors</code></td></tr>
+          <tr><td><code>hours-per-week</code></td><td>yes</td><td>1 to 99</td></tr>
+          <tr><td><code>income_over_50k</code></td><td>yes</td><td>actual pay level: 1 / 0, or <code>&gt;50K</code> / <code>&lt;=50K</code></td></tr>
+          <tr><td><code>workclass</code>, <code>occupation</code></td><td>no</td><td>same categories as the census (e.g. <code>Private</code>, <code>Exec-managerial</code>); empty = unknown</td></tr>
+          <tr><td><code>capital-gain</code>, <code>capital-loss</code></td><td>no</td><td>$ per year, 0 if empty</td></tr>
+          <tr><td><code>sex</code>, <code>race</code></td><td>no</td><td>only used to group the results, never by the model</td></tr>
+          <tr><td><code>employee_id</code></td><td>no</td><td>your own identifier, shown in the table</td></tr>
+        </table>
+        <p style="margin:8px 0 0">Underscores and capitals in column names are accepted (<code>hours_per_week</code>, <code>Age</code>…).</p>
+      </details>
+    </div>
+
+    <div id="up-results" hidden>
+      <div class="kpis" id="up-kpis"></div>
+
+      <div class="howto">
+        <b>Unexplained gap</b> = actual share of high earners − share expected from the job profile, in percentage points.
+        A <b>negative</b> gap means the group earns less than its profile predicts. It is <b>significant</b> when its 95% confidence interval does not cross 0.
+        It is a reason to investigate, not a proof of discrimination.
+      </div>
+
+      <div id="up-group-cards"></div>
+
+      <div class="card">
+        <div class="people-head">
+          <h2>Employees</h2>
+          <span class="sub" style="margin:0" id="up-people-count"></span>
+          <label class="toggle"><input type="checkbox" id="up-only-flagged"> Only potentially underpaid</label>
+        </div>
+        <div class="table-scroll">
+          <table class="people">
+            <thead><tr id="up-people-thead"></tr></thead>
+            <tbody id="up-people-tbody"></tbody>
+          </table>
+        </div>
+        <div class="more" id="up-people-more"></div>
+        <p class="note">Potentially underpaid (orange mark): the model expects more than $50K but the person earns $50K or less. Click a row to open the employee in the simulator.</p>
       </div>
     </div>
   </section>
@@ -532,7 +634,7 @@ function renderPrediction(person, pred) {
 function updateSourceText() {
   const person = readForm();
   if (!loadedPerson) $("#source-text").innerHTML = "Custom profile.";
-  else if (samePerson(person, loadedPerson)) $("#source-text").innerHTML = `Real person <strong>#${loadedPerson.id}</strong> from the test set.`;
+  else if (samePerson(person, loadedPerson)) $("#source-text").innerHTML = `Real person <strong>#${esc(loadedPerson.id)}</strong> ${esc(loadedPerson.source || "from the test set")}.`;
   else $("#source-text").innerHTML = `Based on person <strong>#${loadedPerson.id}</strong>, edited.`;
 }
 
@@ -746,6 +848,285 @@ $("#people-tbody").addEventListener("click", ev => {
   const r = auditRows.find(x => String(x.id) === tr.dataset.id);
   if (!r) return;
   const { expected, flagged, ...person } = r;
+  showView("person");
+  openPerson(person);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+// =====================================================================
+// UPLOAD A COMPANY
+// =====================================================================
+// The CSV is read in the browser, checked, then sent to the same /audit endpoint as the other tab.
+const UP_MAX_ROWS = 50000;
+let upFileName = "";
+let upValid = [];             // employees ready for the API, each with its row number in the file
+let upRows = [];              // employees of the last uploaded audit, with their expected probability
+let upSortKey = "flagged", upSortAsc = false, upShown = 100;
+
+// accepted spellings of each column, after lower-casing and turning spaces and underscores into dashes
+const UP_ALIASES = {
+  "age": "age", "workclass": "workclass", "occupation": "occupation",
+  "education-num": "education-num", "education-years": "education-num", "education": "education",
+  "capital-gain": "capital-gain", "capital-loss": "capital-loss",
+  "hours-per-week": "hours-per-week", "hours": "hours-per-week",
+  "sex": "sex", "race": "race",
+  "income-over-50k": "income_over_50k", "income": "income_over_50k", "income-50k": "income_over_50k",
+  "employee-id": "employee_id", "id": "employee_id",
+};
+
+function parseCsv(text) {
+  text = text.replace(/^﻿/, "");
+  const firstLine = text.split(/\r?\n/, 1)[0];
+  const sep = (firstLine.split(";").length > firstLine.split(",").length) ? ";" : ",";
+  const rows = []; let row = [], cell = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === sep) { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim() !== ""));
+}
+
+const isBlank = v => v == null || ["", "?", "na", "n/a", "nan", "null", "none", "unknown"].includes(String(v).trim().toLowerCase());
+function parseIncome(v) {
+  const raw = String(v ?? "").trim().replace(",", ".");
+  if (raw !== "" && !isNaN(Number(raw))) return Number(raw) === 1 ? 1 : Number(raw) === 0 ? 0 : null;   // 1, 0, 1.0, 0.0
+  const s = raw.toLowerCase().replace(/\s|\$|\./g, "");
+  if (["1", "true", "yes", ">50k"].includes(s)) return 1;
+  if (["0", "false", "no", "<=50k", "≤50k"].includes(s)) return 0;
+  return null;
+}
+
+function readCompany(text) {
+  const rows = parseCsv(text);
+  if (rows.length < 2) return { error: "The file has no employee rows." };
+  const header = rows[0].map(h => UP_ALIASES[h.trim().toLowerCase().replace(/[\s_]+/g, "-")] || null);
+  const col = name => header.indexOf(name);
+  const eduByLabel = Object.fromEntries(Object.entries(OPTIONS.education_levels).map(([k, v]) => [v.toLowerCase(), Number(k)]));
+
+  const missing = [];
+  if (col("age") < 0) missing.push("age");
+  if (col("education-num") < 0 && col("education") < 0) missing.push("education-num");
+  if (col("hours-per-week") < 0) missing.push("hours-per-week");
+  if (col("income_over_50k") < 0) missing.push("income_over_50k");
+  if (missing.length) return { error: `Missing required column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. Open “Expected columns” below.` };
+  if (rows.length - 1 > UP_MAX_ROWS) return { error: `The file has ${fmtInt(rows.length - 1)} employees; the limit is ${fmtInt(UP_MAX_ROWS)}.` };
+
+  const valid = [], errors = [], unseen = { workclass: new Set(), occupation: new Set() };
+  rows.slice(1).forEach((r, i) => {
+    const line = i + 2;                                   // line number in the file (line 1 = header)
+    const get = name => (col(name) >= 0 ? r[col(name)] : undefined);
+    const num = name => { const v = get(name); return isBlank(v) ? null : Number(String(v).trim().replace(/\s/g, "").replace(",", ".")); };
+    const problems = [];
+
+    const age = num("age");
+    if (!Number.isInteger(age) || age < 16 || age > 100) problems.push("age must be a whole number from 16 to 100");
+    let edu = col("education-num") >= 0 ? num("education-num") : null;
+    if (edu == null && col("education") >= 0) edu = eduByLabel[String(get("education") ?? "").trim().toLowerCase()] ?? null;
+    if (!Number.isInteger(edu) || edu < 1 || edu > 16) problems.push("education-num must be 1 to 16");
+    const hours = num("hours-per-week");
+    if (!(hours > 0 && hours <= 99)) problems.push("hours-per-week must be above 0 and at most 99");
+    const gain = num("capital-gain") ?? 0, loss = num("capital-loss") ?? 0;
+    if (!(gain >= 0)) problems.push("capital-gain must be 0 or more");
+    if (!(loss >= 0)) problems.push("capital-loss must be 0 or more");
+    const income = parseIncome(get("income_over_50k"));
+    if (income == null) problems.push("income_over_50k must be 1/0 or >50K/<=50K");
+
+    if (problems.length) { errors.push({ line, problems }); return; }
+    const text = name => (isBlank(get(name)) ? null : String(get(name)).trim());
+    const person = {
+      age, workclass: text("workclass"), "education-num": edu, occupation: text("occupation"),
+      "capital-gain": gain, "capital-loss": loss, "hours-per-week": hours,
+      sex: text("sex"), race: text("race"), income_over_50k: income,
+    };
+    for (const k of ["workclass", "occupation"])
+      if (person[k] != null && !OPTIONS[k].includes(person[k])) unseen[k].add(person[k]);
+    valid.push({ person, line, employeeId: text("employee_id") });
+  });
+  return { valid, errors, unseen, total: rows.length - 1, hasSex: col("sex") >= 0, hasRace: col("race") >= 0 };
+}
+
+function showUploadCheck(res) {
+  const box = $("#up-issues");
+  box.className = "issues"; box.innerHTML = "";
+  if (res.error) { box.className = "issues bad"; box.textContent = res.error; return; }
+  const parts = [];
+  if (res.errors.length) {
+    const list = res.errors.slice(0, 6).map(e => `<li>Line ${e.line}: ${esc(e.problems.join("; "))}</li>`).join("");
+    parts.push(`<b>${fmtInt(res.errors.length)} row${res.errors.length > 1 ? "s" : ""} cannot be audited</b> and will be left out:<ul>${list}${res.errors.length > 6 ? `<li>… and ${fmtInt(res.errors.length - 6)} more</li>` : ""}</ul>`);
+  }
+  for (const k of ["workclass", "occupation"]) {
+    const s = [...res.unseen[k]];
+    if (s.length) parts.push(`${s.length} ${k} value${s.length > 1 ? "s" : ""} the model never saw (${esc(s.slice(0, 4).join(", "))}${s.length > 4 ? "…" : ""}): treated as a rare category.`);
+  }
+  if (!res.hasSex && !res.hasRace) parts.push("No <code>sex</code> or <code>race</code> column: the audit can only report the whole company, not groups.");
+  if (parts.length) { box.className = "issues " + (res.errors.length ? "bad" : "warn"); box.innerHTML = parts.join("<br>"); }
+}
+
+async function loadUploadFile(file) {
+  $("#up-error").textContent = ""; $("#up-status").textContent = ""; $("#up-results").hidden = true;
+  upValid = []; $("#up-run").disabled = true;
+  if (!OPTIONS) { $("#up-error").textContent = "The API is not reachable yet."; return; }
+  upFileName = file.name;
+  const res = readCompany(await file.text());
+  showUploadCheck(res);
+  $("#up-drop").classList.add("loaded");
+  $("#up-drop-title").textContent = file.name;
+  if (res.error) { $("#up-drop-sub").textContent = "Choose another file."; return; }
+  upValid = res.valid;
+  $("#up-drop-sub").textContent = `${fmtInt(res.valid.length)} of ${fmtInt(res.total)} employees ready to audit · click to choose another file`;
+  for (const [key, has] of [["sex", res.hasSex], ["race", res.hasRace]]) {
+    const box = document.querySelector(`input[name=up_group_by][value=${key}]`);
+    box.disabled = !has; box.checked = has;
+    $("#up-lab-" + key).classList.toggle("off", !has);
+  }
+  $("#up-run").disabled = !upValid.length;
+  $("#up-run").textContent = `Run the audit on ${fmtInt(upValid.length)} employees`;
+}
+
+$("#up-file").addEventListener("change", e => { if (e.target.files[0]) loadUploadFile(e.target.files[0]); e.target.value = ""; });
+const upDrop = $("#up-drop");
+["dragenter", "dragover"].forEach(t => upDrop.addEventListener(t, e => { e.preventDefault(); upDrop.classList.add("over"); }));
+["dragleave", "drop"].forEach(t => upDrop.addEventListener(t, e => { e.preventDefault(); upDrop.classList.remove("over"); }));
+upDrop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) loadUploadFile(f); });
+
+$("#up-sample").addEventListener("click", async () => {
+  const btn = $("#up-sample"); btn.disabled = true;
+  try {
+    const { people } = await api("/people?n=500&seed=2026");
+    const cols = ["age", "workclass", "education-num", "occupation", "capital-gain", "capital-loss", "hours-per-week", "sex", "race", "income_over_50k"];
+    const cell = v => v == null ? "" : (/[",;\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+    const csv = ["employee_id," + cols.join(",")]
+      .concat(people.map((p, i) => [`E${String(i + 1).padStart(4, "0")}`, ...cols.map(c => p[c])].map(cell).join(",")))
+      .join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "sample_company.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch (e) {
+    $("#up-error").textContent = "Could not build the sample file: " + e.message;
+  } finally { btn.disabled = false; }
+});
+
+$("#up-run").addEventListener("click", async () => {
+  const btn = $("#up-run");
+  const groupBy = [...document.querySelectorAll("input[name=up_group_by]:checked")].map(c => c.value);
+  $("#up-error").textContent = "";
+  btn.disabled = true;
+  $("#up-status").textContent = `Auditing ${fmtInt(upValid.length)} employees…`;
+  const t0 = performance.now();
+  try {
+    const result = await api("/audit", { employees: upValid.map(v => v.person), group_by: groupBy });
+    const flagged = new Set(result.flagged_underpaid_rows);
+    upRows = upValid.map((v, i) => ({
+      ...v.person, id: v.employeeId ?? `line ${v.line}`, source: `from ${upFileName}`,
+      expected: result.expected_probabilities[i], flagged: flagged.has(i),
+    }));
+    renderUpload(result, groupBy);
+    $("#up-status").textContent = `${fmtInt(upRows.length)} employees from ${upFileName} · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+  } catch (e) {
+    $("#up-status").textContent = "";
+    $("#up-error").textContent = "The audit failed: " + e.message;
+  } finally { btn.disabled = false; }
+});
+
+function renderUpload(result, groupBy) {
+  $("#up-results").hidden = false;
+  const n = upRows.length;
+  const actual = upRows.reduce((s, r) => s + r.income_over_50k, 0) / n;
+  const expected = upRows.reduce((s, r) => s + r.expected, 0) / n;
+  const nFlag = result.flagged_underpaid_rows.length;
+  $("#up-kpis").innerHTML = [
+    ["Employees audited", fmtInt(n), `from ${esc(upFileName)}`],
+    ["Actually earn > $50K", pct(actual), `${fmtInt(Math.round(actual * n))} people`],
+    ["Expected to earn > $50K", pct(expected), "average probability from the model"],
+    ["Potentially underpaid", fmtInt(nFlag), `${pct(nFlag / n)} of employees`],
+  ].map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+
+  const all = Object.values(result.groups).flat();
+  const readable = all.filter(g => g.enough_data);
+  const extent = Math.max(5, ...(readable.length ? readable : all).flatMap(g => g.ci_95_pts.map(Math.abs)));
+  const domain = Math.ceil(extent / 5) * 5;
+  const names = { sex: "Sex", race: "Race" };
+  const cols = groupBy.filter(c => result.groups[c]);
+  $("#up-group-cards").innerHTML = cols.length ? cols.map(col => `
+    <div class="card attr-card">
+      <h2>By ${names[col].toLowerCase()}</h2>
+      <p class="sub">Groups sorted from the largest shortfall to the largest surplus.</p>
+      <table class="forest">
+        <thead><tr>
+          <th>Group</th><th class="num">Employees</th><th class="num">Actual</th><th class="num">Expected</th>
+          <th>Unexplained gap (points, 95% CI)</th><th class="num">Gap</th><th class="num">Underpaid</th>
+        </tr></thead>
+        <tbody>
+          ${result.groups[col].map(g => forestRow(g, domain)).join("")}
+          <tr class="axis-row"><td colspan="4"></td><td class="plot">${axisSvg(domain)}</td><td colspan="2"></td></tr>
+        </tbody>
+      </table>
+      <div class="legend">
+        <span><i style="background:var(--violet)"></i>Significant shortfall</span>
+        <span><i style="background:var(--navy)"></i>Significant surplus</span>
+        <span><i style="background:var(--silver)"></i>Not significant</span>
+        <span>Faded rows: fewer than ${OPTIONS.min_group_size} employees, not reliable</span>
+      </div>
+    </div>`).join("")
+    : `<div class="card attr-card"><p class="sub" style="margin:0">No group to compare: the file has no sex or race column, or none was selected.</p></div>`;
+
+  document.querySelectorAll("#up-group-cards .forest tr[data-tip]").forEach(tr => {
+    tr.addEventListener("mousemove", ev => showTip(tr.dataset.tip, ev));
+    tr.addEventListener("mouseleave", hideTip);
+  });
+  upShown = 100;
+  renderUploadPeople();
+}
+
+$("#up-people-thead").innerHTML = COLUMNS.map(([k, t]) => `<th data-key="${k}">${t}</th>`).join("");
+$("#up-people-thead").addEventListener("click", ev => {
+  const th = ev.target.closest("th"); if (!th) return;
+  if (upSortKey === th.dataset.key) upSortAsc = !upSortAsc; else { upSortKey = th.dataset.key; upSortAsc = false; }
+  renderUploadPeople();
+});
+$("#up-only-flagged").addEventListener("change", () => { upShown = 100; renderUploadPeople(); });
+
+function renderUploadPeople() {
+  const onlyFlagged = $("#up-only-flagged").checked;
+  let rows = onlyFlagged ? upRows.filter(r => r.flagged) : upRows.slice();
+  rows.sort((a, b) => {
+    const va = a[upSortKey], vb = b[upSortKey];
+    const cmp = va == null ? 1 : vb == null ? -1 : (va > vb ? 1 : va < vb ? -1 : 0);
+    if (cmp === 0) return b.expected - a.expected;
+    return upSortAsc ? cmp : -cmp;
+  });
+  document.querySelectorAll("#up-people-thead th").forEach(th => {
+    th.classList.toggle("sorted", th.dataset.key === upSortKey);
+    th.classList.toggle("asc", th.dataset.key === upSortKey && upSortAsc);
+  });
+  $("#up-people-count").textContent = `${fmtInt(rows.length)} ${onlyFlagged ? "potentially underpaid" : "employees"}`;
+  const tbody = $("#up-people-tbody");
+  tbody.innerHTML = rows.length
+    ? rows.slice(0, upShown).map((r, i) =>
+        `<tr data-k="${upRows.indexOf(r)}" class="${r.flagged ? "flagged" : ""}">${COLUMNS.map(([key, , f]) =>
+          `<td>${key === "id" ? esc(String(r.id).startsWith("line") ? r.id : "#" + r.id) : f(r)}</td>`).join("")}</tr>`).join("")
+    : `<tr><td colspan="${COLUMNS.length}" class="empty">Nobody to show.</td></tr>`;
+  $("#up-people-more").innerHTML = rows.length > upShown
+    ? `<button class="btn" id="up-show-more">Show ${fmtInt(Math.min(100, rows.length - upShown))} more (${fmtInt(rows.length - upShown)} hidden)</button>` : "";
+  const more = $("#up-show-more");
+  if (more) more.addEventListener("click", () => { upShown += 100; renderUploadPeople(); });
+}
+
+$("#up-people-tbody").addEventListener("click", ev => {
+  const tr = ev.target.closest("tr[data-k]"); if (!tr) return;
+  const { expected, flagged, ...person } = upRows[Number(tr.dataset.k)];
   showView("person");
   openPerson(person);
   window.scrollTo({ top: 0, behavior: "smooth" });
